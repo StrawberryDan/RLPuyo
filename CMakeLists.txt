@@ -3,6 +3,15 @@ project(RLPuyo)
 include(FetchContent)
 
 
+if (PROJECT_IS_TOP_LEVEL)
+    FetchContent_Declare(StrawberryConfig
+            GIT_REPOSITORY "https://github.com/StrawberryDan/Config.git"
+            GIT_TAG "main")
+    FetchContent_MakeAvailable(StrawberryConfig)
+    include(StrawberryConfig)
+endif()
+
+
 fetchcontent_declare(StrawberryCore
     GIT_REPOSITORY https://github.com/StrawberryDan/Core.git
     GIT_TAG main)
@@ -14,7 +23,9 @@ fetchcontent_declare(StrawberryVulkan
     GIT_TAG main)
 fetchcontent_makeavailable(StrawberryCore StrawberryWindow StrawberryVulkan)
 
-set(CMAKE_CXX_STANDARD 20)
-
-add_executable(RLPuyo src/main.cpp)
+add_executable(RLPuyo
+        src/main.cpp
+        src/Game/Board.hpp
+        src/Game/Board.cpp)
+set_target_properties(RLPuyo PROPERTIES CXX_STANDARD 20)
 target_link_libraries(RLPuyo PUBLIC StrawberryCore StrawberryWindow StrawberryVulkan)

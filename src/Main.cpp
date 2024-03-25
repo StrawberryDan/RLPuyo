@@ -1,8 +1,14 @@
 #include <iostream>
 
+#include "Game/Board.hpp"
+
 
 int main()
 {
-	std::cout << "Hello, World!" << std::endl;
+	using namespace Strawberry::RLPuyo;
+
+	Strawberry::RLPuyo::Board board;
+
+
 	return 0;
 }
