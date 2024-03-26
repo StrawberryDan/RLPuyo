@@ -43,10 +43,7 @@ namespace Strawberry::RLPuyo
 	Board::Board()
 	{
 		// Populate Tile Queue
-		while (mTileQueue.size() < 8)
-		{
-			mTileQueue.push_back(static_cast<Tile>(mTileDistribution(mRandomDevice)));
-		}
+		ReplenishQueue();
 
 		// Assign Random Values to each tile bellow the half way point down the map.
 		for (uint8_t y = BOARD_HEIGHT / 2; y < BOARD_HEIGHT; y++)
@@ -85,11 +82,16 @@ namespace Strawberry::RLPuyo
 			Tile bottom = mTileQueue.front();
 			mTileQueue.pop_front();
 			mCurrentTiles.Emplace(top, bottom);
+			ReplenishQueue();
+		}
+	}
 
-			while (mTileQueue.size() < 8)
-			{
-				mTileQueue.push_back(static_cast<Tile>(mTileDistribution(mRandomDevice)));
-			}
+
+	void Board::ReplenishQueue()
+	{
+		while (mTileQueue.size() < 8)
+		{
+			mTileQueue.push_back(static_cast<Tile>(mTileDistribution(mRandomDevice)));
 		}
 	}
 }

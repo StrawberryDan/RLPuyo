@@ -63,6 +63,10 @@ namespace Strawberry::RLPuyo
         void Step();
 
 
+    protected:
+        void ReplenishQueue();
+
+
     private:
         std::random_device                                          mRandomDevice;
         std::uniform_int_distribution<std::underlying_type_t<Tile>> mTileDistribution{1, 4};
