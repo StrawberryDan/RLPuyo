@@ -31,7 +31,10 @@ namespace Strawberry::RLPuyo
 
 	Renderer::~Renderer()
 	{
-		mQueue->WaitUntilIdle();
+		if (mQueue)
+		{
+			mQueue->WaitUntilIdle();
+		}
 	}
 
 
