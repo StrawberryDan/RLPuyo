@@ -26,7 +26,9 @@ fetchcontent_makeavailable(StrawberryCore StrawberryWindow StrawberryVulkan)
 add_executable(RLPuyo
         src/main.cpp
         src/Game/Board.hpp
-        src/Game/Board.cpp)
+        src/Game/Board.cpp
+        src/Game/Renderer.hpp
+        src/Game/Renderer.cpp)
 set_target_properties(RLPuyo PROPERTIES CXX_STANDARD 20)
 target_link_libraries(RLPuyo PUBLIC StrawberryCore StrawberryWindow StrawberryVulkan)
 
