@@ -3,13 +3,33 @@
 //----------------------------------------------------------------------------------------------------------------------
 #include "Board.hpp"
 // Standard Library
+#include <algorithm>
 #include <random>
+
 
 //======================================================================================================================
 //  Method Definitions
 //----------------------------------------------------------------------------------------------------------------------
 namespace Strawberry::RLPuyo
 {
+	void PlaceableTiles::MoveLeft()
+	{
+		if (mPosition[0] > 0 && mPosition[0] < BOARD_WIDTH - 1)
+		{
+			mPosition[0] -= 1;
+		}
+	}
+
+
+	void PlaceableTiles::MoveRight()
+	{
+		if (mPosition[0] > 0 && mPosition[0] < BOARD_WIDTH - 1)
+		{
+			mPosition[0] += 1;
+		}
+	}
+
+
 	void PlaceableTiles::Descend()
 	{
 		mPosition[1] += 1;

@@ -39,6 +39,8 @@ namespace Strawberry::RLPuyo
         {}
 
 
+        void MoveLeft();
+        void MoveRight();
         void Descend();
         void Swap();
 
