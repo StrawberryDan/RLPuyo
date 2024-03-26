@@ -29,3 +29,10 @@ add_executable(RLPuyo
         src/Game/Board.cpp)
 set_target_properties(RLPuyo PROPERTIES CXX_STANDARD 20)
 target_link_libraries(RLPuyo PUBLIC StrawberryCore StrawberryWindow StrawberryVulkan)
+
+set(RLPUYO_REALTIME OFF CACHE BOOL "Whether the game should operate on human-scale timings")
+if (RLPUYO_REALTIME)
+    target_compile_definitions(RLPuyo PUBLIC RLPUYO_REALTIME=1)
+else()
+    target_compile_definitions(RLPuyo PUBLIC RLPUYO_REALTIME=0)
+endif()
