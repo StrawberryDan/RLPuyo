@@ -14,7 +14,7 @@ namespace Strawberry::RLPuyo
 {
 	void PlaceableTiles::MoveLeft()
 	{
-		if (mPosition[0] > 0 && mPosition[0] < BOARD_WIDTH - 1)
+		if (mPosition[0] > 0)
 		{
 			mPosition[0] -= 1;
 		}
@@ -23,7 +23,7 @@ namespace Strawberry::RLPuyo
 
 	void PlaceableTiles::MoveRight()
 	{
-		if (mPosition[0] > 0 && mPosition[0] < BOARD_WIDTH - 1)
+		if (mPosition[0] < BOARD_WIDTH - 1)
 		{
 			mPosition[0] += 1;
 		}
@@ -76,6 +76,12 @@ namespace Strawberry::RLPuyo
 	}
 
 
+	Tile Board::GetTile(Core::Math::Vec2u position) const noexcept
+	{
+		return mTiles[position[0]][position[1]];
+	}
+
+
 	void Board::Step()
 	{
 		// Check if there is a tile currently being placed.
@@ -92,6 +98,7 @@ namespace Strawberry::RLPuyo
 				mTiles[mCurrentTiles->Position()[0]][mCurrentTiles->Position()[1] + 0] = mCurrentTiles->Top();
 				Core::AssertEQ(mTiles[mCurrentTiles->Position()[0]][mCurrentTiles->Position()[1] + 1], Tile::EMPTY);
 				mTiles[mCurrentTiles->Position()[0]][mCurrentTiles->Position()[1] + 1] = mCurrentTiles->Bottom();
+				Resolve({mCurrentTiles->Position(), mCurrentTiles->Position().Offset(0, 1)});
 				mCurrentTiles.Reset();
 			}
 		}
@@ -113,5 +120,192 @@ namespace Strawberry::RLPuyo
 		{
 			mTileQueue.push_back(static_cast<Tile>(mTileDistribution(mRandomDevice)));
 		}
+	}
+
+
+	void Board::Resolve(std::unordered_set<Core::Math::Vec2u> candidates)
+	{
+		while (!candidates.empty())
+		{
+			std::set<unsigned int> affectedColumns;
+			for (auto candidate: candidates)
+			{
+				auto group = FindConnectedTiles(candidate);
+				if (group.size() >= 3)
+				{
+					auto columns = EliminateTiles(group);
+					for (auto c : columns) affectedColumns.emplace(c);
+				}
+			}
+
+			candidates = ApplyGravity(affectedColumns);
+		}
+	}
+
+
+	std::unordered_set<Core::Math::Vec2u> Board::FindConnectedTiles(Core::Math::Vec2u root)
+	{
+		std::unordered_set<Core::Math::Vec2u> closed, frontier{root};
+
+		// Expand the frontier until it can no longer be expanded.
+		while (!frontier.empty())
+		{
+			// Expand the frontier;
+			std::unordered_set<Core::Math::Vec2u> newFrontier;
+			for (auto tile : frontier)
+			{
+				Core::AssertNEQ(GetTile(tile), Tile::EMPTY);
+				// Try to add left tile
+				if (!closed.contains(tile.Offset(-1, 0)) && tile[0] > 0 && GetTile(tile.Offset(-1, 0)) == GetTile(tile))
+				{
+					newFrontier.emplace(tile);
+				}
+
+				// Try to add right tile
+				if (!closed.contains(tile.Offset(1, 0)) && tile[0] < BOARD_WIDTH - 1 && GetTile(tile.Offset(1, 0)) == GetTile(tile))
+				{
+					newFrontier.emplace(tile);
+				}
+
+				// Try to add above tile
+				if (!closed.contains(tile.Offset(0, -1)) && tile[1] > 0 && GetTile(tile.Offset(0, 1)) == GetTile(tile))
+				{
+					newFrontier.emplace(tile);
+				}
+
+				// Try to add below tile
+				if (!closed.contains(tile.Offset(0, 1)) && tile[1] < BOARD_HEIGHT - 1 && GetTile(tile.Offset(0, 1)) == GetTile(tile))
+				{
+					newFrontier.emplace(tile);
+				}
+				// Add this tile to the closed set
+				closed.emplace(tile);
+			}
+
+			frontier = newFrontier;
+		}
+
+		return closed;
+	}
+
+
+	std::set<unsigned int> Board::EliminateTiles(std::unordered_set<Core::Math::Vec2u> tiles)
+	{
+		std::set<unsigned int> columns;
+
+		for (auto tile : tiles)
+		{
+			// Remove tile.
+			mTiles[tile[0]][tile[1]] = Tile::EMPTY;
+			// Add tile to column list.
+			columns.emplace(tile[0]);
+		}
+
+		return columns;
+	}
+
+
+	std::unordered_set<Core::Math::Vec2u> Board::ApplyGravity(std::set<unsigned int> columns) noexcept
+	{
+		std::unordered_set<Core::Math::Vec2u> affectedTiles;
+
+		for (unsigned int column : columns)
+		{
+			auto affectedTilesInColumn = CloseGap(column);
+			for (auto tile : affectedTilesInColumn)
+			{
+				affectedTiles.emplace(tile);
+			}
+		}
+
+		return affectedTiles;
+	}
+
+
+	std::unordered_set<Core::Math::Vec2u> Board::CloseGap(unsigned int column) noexcept
+	{
+		Core::Math::Vec2u base;
+		if (GetTile({column, BOARD_HEIGHT - 1}) == Tile::EMPTY)
+		{
+			base = Core::Math::Vec2u(column, BOARD_HEIGHT);
+		}
+		else
+		{
+			base = FindTopmostTile({column, BOARD_HEIGHT - 1});
+		}
+
+		std::unordered_set<Core::Math::Vec2u> affectedTiles;
+		while (AnyTilesAbove(base))
+		{
+			auto gapSize = CountEmptyTilesAbove(base);
+			auto chunkSize = CountVerticalTiles(base.Offset(0, -gapSize - 1));
+
+			for (int i = 0; i < gapSize; i++)
+			{
+				mTiles[column][base[1] + i + 1] = std::exchange(mTiles[column][base[1] + i + gapSize + 1], Tile::EMPTY);
+				affectedTiles.emplace(column, base[1] + i + 1);
+			}
+
+			base = FindTopmostTile(base);
+		}
+
+		return affectedTiles;
+	}
+
+
+	bool Board::AnyTilesAbove(Core::Math::Vec2u position) const noexcept
+	{
+		if (position[1] == 0) return false;
+
+		position[1] -= 1;
+		while (true)
+		{
+			if (GetTile(position) != Tile::EMPTY) return true;
+			if (position[1] == 0) return false;
+			position[1] -= 1;
+		}
+	}
+
+
+	Core::Math::Vec2u Board::FindTopmostTile(Core::Math::Vec2u position) const noexcept
+	{
+		Core::AssertNEQ(GetTile(position), Tile::EMPTY);
+
+		while (GetTile(position) != Tile::EMPTY)
+		{
+			if (position[1] == 0) return position;
+			position[1] -= 1;
+		}
+		return position;
+	}
+
+
+	unsigned int Board::CountEmptyTilesAbove(Core::Math::Vec2u position) const noexcept
+	{
+		if (position[1] == 0) return 0;
+		position[1] -= 1;
+
+		unsigned int emptyTiles = 0;
+		while (GetTile(position) == Tile::EMPTY)
+		{
+			emptyTiles += 1;
+		}
+
+		return emptyTiles;
+	}
+
+
+	unsigned int Board::CountVerticalTiles(Core::Math::Vec2u position) const noexcept
+	{
+		Core::AssertNEQ(GetTile(position), Tile::EMPTY);
+
+		unsigned int count = 0;
+		while (GetTile(position) != Tile::EMPTY)
+		{
+			if (position[1] == 0) return count;
+			position[1] -= 1;
+			count += 1;
+		}
+		return count;
 	}
 }
