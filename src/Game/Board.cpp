@@ -321,6 +321,8 @@ namespace Strawberry::RLPuyo
 		while (GetTile(position) == Tile::EMPTY)
 		{
 			emptyTiles += 1;
+			if (position[1] == 0) break;
+			position[1] -= 1;
 		}
 
 		return emptyTiles;
