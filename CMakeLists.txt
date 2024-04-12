@@ -37,6 +37,11 @@ add_target_shaders(TARGET RLPuyo SHADERS
 )
 
 
+if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    target_link_options(RLPuyo PRIVATE "-static")
+endif()
+
+
 set(RLPUYO_REALTIME OFF CACHE BOOL "Whether the game should operate on human-scale timings")
 if (RLPUYO_REALTIME)
     target_compile_definitions(RLPuyo PUBLIC RLPUYO_REALTIME=1)
