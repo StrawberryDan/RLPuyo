@@ -306,7 +306,7 @@ namespace Strawberry::RLPuyo
 			if (position[1] == 0) return position;
 			position[1] -= 1;
 		}
-		return position;
+		return position.Offset(0, 1);
 	}
 
 
