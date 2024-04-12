@@ -32,6 +32,9 @@ namespace Strawberry::RLPuyo
     };
 
 
+	using TilePosition = Core::Math::Vec2u;
+
+
     class PlaceableTiles
     {
     public:
@@ -47,14 +50,14 @@ namespace Strawberry::RLPuyo
         void Swap();
 
 
-        Core::Math::Vec2u Position() const;
-        Tile              Top() const;
-        Tile              Bottom() const;
+        TilePosition Position() const;
+        Tile         Top() const;
+        Tile         Bottom() const;
 
 
     private:
-        Core::Math::Vec2u mPosition;
-        Tile              mTiles[2];
+        TilePosition mPosition;
+        Tile         mTiles[2];
     };
 
 
@@ -64,7 +67,7 @@ namespace Strawberry::RLPuyo
         Board();
 
 
-		Tile GetTile(Core::Math::Vec2u position) const noexcept;
+		Tile GetTile(TilePosition position) const noexcept;
         void Step();
 
 
@@ -73,31 +76,31 @@ namespace Strawberry::RLPuyo
         void ReplenishQueue();
 		/// Resolve the board after tiles have been placed.
 		/// @param candidates The set of tiles which may have formed groups.
-		void Resolve(std::unordered_set<Core::Math::Vec2u> candidates);
+		void Resolve(std::unordered_set<TilePosition> candidates);
 		/// Finds tiles of the same type which are adjacent to the root tile provided.
 		/// @param root the cell from which to search.
 		/// @return The positions of all the tiles connected to the root (inclusive).
-		std::unordered_set<Core::Math::Vec2u> FindConnectedTiles(Core::Math::Vec2u root);
+		std::unordered_set<TilePosition> FindConnectedTiles(TilePosition root);
 		/// Removes the given tiles and returns the columns to which gravity need be applied.
 		/// @param The tiles to eliminate.
 		/// @return The set of columns to which gravity need be applied.
-		std::set<unsigned int> EliminateTiles(std::unordered_set<Core::Math::Vec2u> tiles);
+		std::set<unsigned int> EliminateTiles(std::unordered_set<TilePosition> tiles);
 		/// Applys gravity to the provided columns.
 		/// @param columns The columns to which to apply gravity.
 		/// @return The new positions of the tiles which descended due to gravity.
-		std::unordered_set<Core::Math::Vec2u> ApplyGravity(std::set<unsigned int> columns) noexcept;
+		std::unordered_set<TilePosition> ApplyGravity(std::set<unsigned int> columns) noexcept;
 		/// Closes the first gap between two sets of non-contiguous tiles in the given column.
 		/// @param column The column in which to close the gap.
 		/// @return The new positions of tiles which have been moved.
-		std::unordered_set<Core::Math::Vec2u> CloseGap(unsigned int column) noexcept;
+		std::unordered_set<TilePosition> CloseGap(unsigned int column) noexcept;
 		/// Returns whether there are any tiles (non-empty) above the given position (non-inclusive).
-		bool AnyTilesAbove(Core::Math::Vec2u position) const noexcept;
+		bool AnyTilesAbove(TilePosition position) const noexcept;
 		/// Returns the position of the top most tile which is contiguously above the given position.
-		Core::Math::Vec2u FindTopmostTile(Core::Math::Vec2u position) const noexcept;
+		TilePosition FindTopmostTile(TilePosition position) const noexcept;
 		/// Returns the number of contiguous empty tiles directly above the given position.
-		unsigned int CountEmptyTilesAbove(Core::Math::Vec2u position) const noexcept;
+		unsigned int CountEmptyTilesAbove(TilePosition position) const noexcept;
 		/// Returns the number of non-empty tiles above the given tile, including itself.
-		unsigned int CountVerticalTiles(Core::Math::Vec2u position) const noexcept;
+		unsigned int CountVerticalTiles(TilePosition position) const noexcept;
 
 
     private:

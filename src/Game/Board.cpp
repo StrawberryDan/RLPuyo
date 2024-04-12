@@ -43,7 +43,7 @@ namespace Strawberry::RLPuyo
 	}
 
 
-	Core::Math::Vec2u PlaceableTiles::Position() const
+	TilePosition PlaceableTiles::Position() const
 	{
 		return mPosition;
 	}
@@ -82,7 +82,7 @@ namespace Strawberry::RLPuyo
 	}
 
 
-	Tile Board::GetTile(Core::Math::Vec2u position) const noexcept
+	Tile Board::GetTile(TilePosition position) const noexcept
 	{
 		return mTiles[position[0]][position[1]];
 	}
@@ -129,7 +129,7 @@ namespace Strawberry::RLPuyo
 	}
 
 
-	void Board::Resolve(std::unordered_set<Core::Math::Vec2u> candidates)
+	void Board::Resolve(std::unordered_set<TilePosition> candidates)
 	{
 		while (!candidates.empty())
 		{
@@ -149,15 +149,15 @@ namespace Strawberry::RLPuyo
 	}
 
 
-	std::unordered_set<Core::Math::Vec2u> Board::FindConnectedTiles(Core::Math::Vec2u root)
+	std::unordered_set<TilePosition> Board::FindConnectedTiles(TilePosition root)
 	{
-		std::unordered_set<Core::Math::Vec2u> closed, frontier{root};
+		std::unordered_set<TilePosition> closed, frontier{root};
 
 		// Expand the frontier until it can no longer be expanded.
 		while (!frontier.empty())
 		{
 			// Expand the frontier;
-			std::unordered_set<Core::Math::Vec2u> newFrontier;
+			std::unordered_set<TilePosition> newFrontier;
 			for (auto tile : frontier)
 			{
 				Core::AssertNEQ(GetTile(tile), Tile::EMPTY);
@@ -195,7 +195,7 @@ namespace Strawberry::RLPuyo
 	}
 
 
-	std::set<unsigned int> Board::EliminateTiles(std::unordered_set<Core::Math::Vec2u> tiles)
+	std::set<unsigned int> Board::EliminateTiles(std::unordered_set<TilePosition> tiles)
 	{
 		std::set<unsigned int> columns;
 
@@ -211,9 +211,9 @@ namespace Strawberry::RLPuyo
 	}
 
 
-	std::unordered_set<Core::Math::Vec2u> Board::ApplyGravity(std::set<unsigned int> columns) noexcept
+	std::unordered_set<TilePosition> Board::ApplyGravity(std::set<unsigned int> columns) noexcept
 	{
-		std::unordered_set<Core::Math::Vec2u> affectedTiles;
+		std::unordered_set<TilePosition> affectedTiles;
 
 		for (unsigned int column : columns)
 		{
@@ -228,19 +228,19 @@ namespace Strawberry::RLPuyo
 	}
 
 
-	std::unordered_set<Core::Math::Vec2u> Board::CloseGap(unsigned int column) noexcept
+	std::unordered_set<TilePosition> Board::CloseGap(unsigned int column) noexcept
 	{
-		Core::Math::Vec2u base;
+		TilePosition base;
 		if (GetTile({column, BOARD_HEIGHT - 1}) == Tile::EMPTY)
 		{
-			base = Core::Math::Vec2u(column, BOARD_HEIGHT);
+			base = TilePosition(column, BOARD_HEIGHT);
 		}
 		else
 		{
 			base = FindTopmostTile({column, BOARD_HEIGHT - 1});
 		}
 
-		std::unordered_set<Core::Math::Vec2u> affectedTiles;
+		std::unordered_set<TilePosition> affectedTiles;
 		while (AnyTilesAbove(base))
 		{
 			auto gapSize = CountEmptyTilesAbove(base);
@@ -259,7 +259,7 @@ namespace Strawberry::RLPuyo
 	}
 
 
-	bool Board::AnyTilesAbove(Core::Math::Vec2u position) const noexcept
+	bool Board::AnyTilesAbove(TilePosition position) const noexcept
 	{
 		if (position[1] == 0) return false;
 
@@ -273,7 +273,7 @@ namespace Strawberry::RLPuyo
 	}
 
 
-	Core::Math::Vec2u Board::FindTopmostTile(Core::Math::Vec2u position) const noexcept
+	TilePosition Board::FindTopmostTile(TilePosition position) const noexcept
 	{
 		Core::AssertNEQ(GetTile(position), Tile::EMPTY);
 
@@ -286,7 +286,7 @@ namespace Strawberry::RLPuyo
 	}
 
 
-	unsigned int Board::CountEmptyTilesAbove(Core::Math::Vec2u position) const noexcept
+	unsigned int Board::CountEmptyTilesAbove(TilePosition position) const noexcept
 	{
 		if (position[1] == 0) return 0;
 		position[1] -= 1;
@@ -301,7 +301,7 @@ namespace Strawberry::RLPuyo
 	}
 
 
-	unsigned int Board::CountVerticalTiles(Core::Math::Vec2u position) const noexcept
+	unsigned int Board::CountVerticalTiles(TilePosition position) const noexcept
 	{
 		Core::AssertNEQ(GetTile(position), Tile::EMPTY);
 
