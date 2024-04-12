@@ -12,13 +12,14 @@ int main()
 	Strawberry::RLPuyo::Board board;
 
 
-	Window::Window window("RLPuyo", {480, 360});
+	Window::Window window("RLPuyo", {4 * 480, 4 * 360});
 	Renderer renderer(window);
 
 	while (!window.CloseRequested())
 	{
 		Window::PollInput();
 
+		renderer.Submit(board);
 		renderer.Render();
 
 		window.SwapBuffers();
