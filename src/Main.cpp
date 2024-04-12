@@ -4,7 +4,7 @@
 #include "Game/Renderer.hpp"
 
 
-constexpr double UPDATE_INTERVAL = 0.5;
+constexpr double UPDATE_INTERVAL = 0.2;
 
 
 int main()
@@ -19,11 +19,13 @@ int main()
 	Renderer renderer(window);
 
 #if RLPUYO_REALTIME
-	Core::Clock mUpdateTimer(true);
+	Core::Clock updateTimer(true);
 #endif
 
+	Core::Clock frameTimer;
 	while (!window.CloseRequested())
 	{
+		frameTimer.Restart();
 		Window::PollInput();
 
 		while (auto event = window.NextEvent())
@@ -32,10 +34,10 @@ int main()
 		}
 
 #if RLPUYO_REALTIME
-		if (mUpdateTimer.Read() >= UPDATE_INTERVAL)
+		if (updateTimer.Read() >= UPDATE_INTERVAL)
 		{
 			board.Step();
-			mUpdateTimer.Restart();
+			updateTimer.Restart();
 		}
 #else
 		board.Step();
@@ -43,8 +45,10 @@ int main()
 
 		renderer.Submit(board);
 		renderer.Render();
-
 		window.SwapBuffers();
+
+		std::cout << "FPS: " << 1.0 / frameTimer.Read() << std::endl;
+		frameTimer.Restart();
 	}
 
 	return 0;
