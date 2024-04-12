@@ -158,25 +158,25 @@ namespace Strawberry::RLPuyo
 				// Try to add left tile
 				if (!closed.contains(tile.Offset(-1, 0)) && tile[0] > 0 && GetTile(tile.Offset(-1, 0)) == GetTile(tile))
 				{
-					newFrontier.emplace(tile);
+					newFrontier.emplace(tile.Offset(-1, 0));
 				}
 
 				// Try to add right tile
 				if (!closed.contains(tile.Offset(1, 0)) && tile[0] < BOARD_WIDTH - 1 && GetTile(tile.Offset(1, 0)) == GetTile(tile))
 				{
-					newFrontier.emplace(tile);
+					newFrontier.emplace(tile.Offset(1, 0));
 				}
 
 				// Try to add above tile
-				if (!closed.contains(tile.Offset(0, -1)) && tile[1] > 0 && GetTile(tile.Offset(0, 1)) == GetTile(tile))
+				if (!closed.contains(tile.Offset(0, -1)) && tile[1] > 0 && GetTile(tile.Offset(0, -1)) == GetTile(tile))
 				{
-					newFrontier.emplace(tile);
+					newFrontier.emplace(tile.Offset(0, -1));
 				}
 
 				// Try to add below tile
 				if (!closed.contains(tile.Offset(0, 1)) && tile[1] < BOARD_HEIGHT - 1 && GetTile(tile.Offset(0, 1)) == GetTile(tile))
 				{
-					newFrontier.emplace(tile);
+					newFrontier.emplace(tile.Offset(0, 1));
 				}
 				// Add this tile to the closed set
 				closed.emplace(tile);
