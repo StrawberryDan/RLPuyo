@@ -316,6 +316,7 @@ namespace Strawberry::RLPuyo
 				affectedTiles.emplace(column, dstRow);
 			}
 
+			if (GetTile(base) == Tile::EMPTY) return affectedTiles;
 			base = FindTopmostTile(base);
 		}
 
