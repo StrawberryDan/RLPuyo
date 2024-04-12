@@ -82,6 +82,44 @@ namespace Strawberry::RLPuyo
 	}
 
 
+	void Board::ProcessEvent(Window::Event event)
+	{
+		if (auto key = event.Value<Window::Events::Key>())
+		{
+			if (key->action == Window::Input::KeyAction::Release)
+			{
+				switch (key->keyCode)
+				{
+					case Window::Input::KeyCode::LEFT:
+						if (mCurrentTiles->Position()[0] > 0 && mCurrentTiles &&
+							GetTile(mCurrentTiles->Position().Offset(-1, 0)) == Tile::EMPTY &&
+							GetTile(mCurrentTiles->Position().Offset(-1, 1)) == Tile::EMPTY)
+						{
+							mCurrentTiles->MoveLeft();
+						}
+						break;
+					case Window::Input::KeyCode::RIGHT:
+						if (mCurrentTiles->Position()[0] <= BOARD_WIDTH - 1 && mCurrentTiles &&
+							GetTile(mCurrentTiles->Position().Offset(1, 0)) == Tile::EMPTY &&
+							GetTile(mCurrentTiles->Position().Offset(1, 1)) == Tile::EMPTY)
+						{
+							mCurrentTiles->MoveRight();
+						}
+						break;
+					case Window::Input::KeyCode::SPACE:
+						if (mCurrentTiles)
+						{
+							mCurrentTiles->Swap();
+						}
+						break;
+					default:
+						return;
+				}
+			}
+		}
+	}
+
+
 	Core::Optional<Tile> Board::FallingTilesTop() const noexcept
 	{
 		return mCurrentTiles.Map([](const auto& x) { return x.Top(); });
