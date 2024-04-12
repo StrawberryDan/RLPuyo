@@ -32,7 +32,7 @@ namespace Strawberry::RLPuyo
     };
 
 
-	using TilePosition = Core::Math::Vec2u;
+	using TilePosition = Core::Math::Vec2i;
 
 
     class PlaceableTiles
