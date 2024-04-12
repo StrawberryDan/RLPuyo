@@ -10,6 +10,13 @@ layout (set=0,binding=0) uniform Constants
 };
 
 
+layout (set=1, binding=0) buffer BoardState
+{
+    uvec2 fallingTilesPosition;
+    uint  tiles[];
+};
+
+
 const vec2 Positions[] = {
     {0.0, 0.0}, {0.0, 1.0}, {1.0, 1.0},
     {0.0, 0.0}, {1.0, 1.0}, {1.0, 0.0}
@@ -23,9 +30,19 @@ layout (location = 1) out flat uint tileIndex;
 void main()
 {
     tileIndex = gl_InstanceIndex;
-
-    vec2 offset = vec2((gl_InstanceIndex % boardSize.x) * (tileSize.x + gapSize.x), (gl_InstanceIndex / boardSize.x) * (tileSize.y + gapSize.y));
-
     fragPosition = Positions[gl_VertexIndex];
-    gl_Position = projection *  vec4(offset + tileSize * fragPosition, 0.0, 1.0);
+
+    if (tileIndex >= boardSize.x * boardSize.y)
+    {
+        bool top = tileIndex == boardSize.x * boardSize.y;
+        vec2 offset = fallingTilesPosition * (tileSize + gapSize);
+        if (!top) offset.y -= (tileSize.y + gapSize.y);
+        offset.y = (boardSize.y - 1) * (tileSize.y + gapSize.y) - offset.y;
+        gl_Position = projection *  vec4(offset + tileSize * fragPosition, 0.0, 1.0);
+    }
+    else
+    {
+        vec2 offset = vec2((gl_InstanceIndex % boardSize.x) * (tileSize.x + gapSize.x), (gl_InstanceIndex / boardSize.x) * (tileSize.y + gapSize.y));
+        gl_Position = projection *  vec4(offset + tileSize * fragPosition, 0.0, 1.0);
+    }
 }

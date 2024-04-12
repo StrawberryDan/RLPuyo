@@ -60,7 +60,7 @@ namespace Strawberry::RLPuyo
 		, mConstantsDescriptor(mDescriptorPool, mPipelineLayout.GetSetLayout(0))
 		, mConstantsBuffer(&mAllocator, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 16 * sizeof(float) + 2 * sizeof(uint32_t) + 2 * 2 * sizeof(float), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
 		, mBoardStateDescriptor(mDescriptorPool, mPipelineLayout.GetSetLayout(1))
-		, mBoardStateBuffer(&mAllocator, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, (BOARD_WIDTH * BOARD_HEIGHT /* + 2 */) * sizeof(uint32_t), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
+		, mBoardStateBuffer(&mAllocator, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 2 * sizeof(uint32_t) + (BOARD_WIDTH * BOARD_HEIGHT + 2) * sizeof(uint32_t), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
 		, mCommandPool(*mQueue)
 		, mPrimaryCommandBuffer(mCommandPool)
 		, mDrawingBuffer(mCommandPool, VK_COMMAND_BUFFER_LEVEL_SECONDARY)
@@ -94,6 +94,7 @@ namespace Strawberry::RLPuyo
 	void Renderer::Submit(const Board& board)
 	{
 		Core::IO::DynamicByteBuffer mBoardStateBufferContents;
+		mBoardStateBufferContents.Push(board.FallingTilesPosition().UnwrapOr(TilePosition(0, 0)));
 		for (int y = BOARD_HEIGHT - 1; y >= 0; --y)
 		{
 			for (int x = 0; x < BOARD_WIDTH; x++)
@@ -101,6 +102,8 @@ namespace Strawberry::RLPuyo
 				mBoardStateBufferContents.Push(static_cast<uint32_t>(board.GetTile({x, y})));
 			}
 		}
+		mBoardStateBufferContents.Push(static_cast<uint32_t>(board.FallingTilesBottom().UnwrapOr(Tile::EMPTY)));
+		mBoardStateBufferContents.Push(static_cast<uint32_t>(board.FallingTilesTop().UnwrapOr(Tile::EMPTY)));
 		mBoardStateBuffer.SetData(mBoardStateBufferContents);
 
 
@@ -115,7 +118,7 @@ namespace Strawberry::RLPuyo
 			mDrawingBuffer.BindDescriptorSet(mPipeline, 1, mBoardStateDescriptor);
 		}
 
-		mDrawingBuffer.Draw(6, BOARD_WIDTH * BOARD_HEIGHT);
+		mDrawingBuffer.Draw(6, BOARD_WIDTH * BOARD_HEIGHT + 2);
 	}
 
 
@@ -157,7 +160,7 @@ namespace Strawberry::RLPuyo
 	{
 		return Vulkan::PipelineLayout::Builder(device)
 			.WithDescriptorSet({VkDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, nullptr)})
-			.WithDescriptorSet({VkDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr)})
+			.WithDescriptorSet({VkDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, nullptr)})
 			.Build();
 	}
 

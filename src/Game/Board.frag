@@ -12,7 +12,8 @@ layout (set=0,binding=0) uniform Constants
 
 layout (set=1, binding=0) buffer BoardState
 {
-    uint tiles[];
+    uvec2 fallingTilesPosition;
+    uint  tiles[];
 };
 
 

@@ -39,7 +39,7 @@ namespace Strawberry::RLPuyo
     {
     public:
         PlaceableTiles(Tile first, Tile second)
-            : mPosition((BOARD_WIDTH + 1) / 2, 0)
+            : mPosition((BOARD_WIDTH + 1) / 2, -2)
             , mTiles{first, second}
         {}
 
@@ -67,6 +67,9 @@ namespace Strawberry::RLPuyo
         Board();
 
 
+		Core::Optional<Tile> FallingTilesTop() const noexcept;
+		Core::Optional<Tile> FallingTilesBottom() const noexcept;
+		Core::Optional<TilePosition> FallingTilesPosition() const noexcept;
 		Tile GetTile(TilePosition position) const noexcept;
         void Step();
 

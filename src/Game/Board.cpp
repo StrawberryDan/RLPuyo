@@ -82,6 +82,24 @@ namespace Strawberry::RLPuyo
 	}
 
 
+	Core::Optional<Tile> Board::FallingTilesTop() const noexcept
+	{
+		return mCurrentTiles.Map([](const auto& x) { return x.Top(); });
+	}
+
+
+	Core::Optional<Tile> Board::FallingTilesBottom() const noexcept
+	{
+		return mCurrentTiles.Map([](const auto& x) { return x.Bottom(); });
+	}
+
+
+	Core::Optional<TilePosition> Board::FallingTilesPosition() const noexcept
+	{
+		return mCurrentTiles.Map([](const auto& x) { return x.Position(); });
+	}
+
+
 	Tile Board::GetTile(TilePosition position) const noexcept
 	{
 		return mTiles[position[0]][position[1]];
@@ -93,9 +111,7 @@ namespace Strawberry::RLPuyo
 		// Check if there is a tile currently being placed.
 		if (mCurrentTiles)
 		{
-			// Descend the current placing tile
-			mCurrentTiles->Descend();
-			auto hasHitBottom = [this]{ return mCurrentTiles->Position()[1] == 1; };
+			auto hasHitBottom = [this]{ return mCurrentTiles->Position()[1] == BOARD_HEIGHT - 2; };
 			auto hasHitAnotherTile = [this]{ return mTiles[mCurrentTiles->Position()[0]][mCurrentTiles->Position()[1] + 2] != Tile::EMPTY; };
 			// Check if the tile has landed on
 			if (hasHitBottom() || hasHitAnotherTile())
@@ -106,6 +122,11 @@ namespace Strawberry::RLPuyo
 				mTiles[mCurrentTiles->Position()[0]][mCurrentTiles->Position()[1] + 1] = mCurrentTiles->Bottom();
 				Resolve({mCurrentTiles->Position(), mCurrentTiles->Position().Offset(0, 1)});
 				mCurrentTiles.Reset();
+			}
+			else
+			{
+				// Descend the current placing tile
+				mCurrentTiles->Descend();
 			}
 		}
 		else
