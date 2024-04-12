@@ -18,8 +18,8 @@
 //----------------------------------------------------------------------------------------------------------------------
 namespace Strawberry::RLPuyo
 {
-    static constexpr uint8_t BOARD_WIDTH  =  5;
-    static constexpr uint8_t BOARD_HEIGHT = 16;
+    static constexpr uint8_t BOARD_WIDTH  = 10;
+    static constexpr uint8_t BOARD_HEIGHT = 20;
 
 
     enum class Tile : uint8_t
