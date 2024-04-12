@@ -272,8 +272,10 @@ namespace Strawberry::RLPuyo
 
 			for (int i = 0; i < chunkSize; i++)
 			{
-				mTiles[column][base[1] + i + 1] = std::exchange(mTiles[column][base[1] + i + gapSize + 1], Tile::EMPTY);
-				affectedTiles.emplace(column, base[1] + i + 1);
+				auto srcRow = base[1] - i - gapSize - 1;
+				auto dstRow = base[1] - i - 1;
+				mTiles[column][dstRow] = std::exchange(mTiles[column][srcRow], Tile::EMPTY);
+				affectedTiles.emplace(column, dstRow);
 			}
 
 			base = FindTopmostTile(base);
