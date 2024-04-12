@@ -71,6 +71,16 @@ namespace Strawberry::RLPuyo
 			for (uint8_t x = 0; x < BOARD_WIDTH; x++)
 			{
 				mTiles[x][y] = static_cast<Tile>(mTileDistribution(mRandomDevice));
+
+				auto contiguousSize = FindConnectedTiles({x, y}).size();
+				while (contiguousSize > 2)
+				{
+					uint8_t newTile = std::underlying_type_t<Tile>(mTiles[x][y]);
+					newTile = (newTile + 1) % 5;
+					if (newTile == 0) newTile += 1;
+					mTiles[x][y] = static_cast<Tile>(newTile);
+					contiguousSize = FindConnectedTiles({x, y}).size();
+				}
 			}
 		}
 	}
