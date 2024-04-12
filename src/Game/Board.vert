@@ -12,7 +12,7 @@ layout (set=0,binding=0) uniform Constants
 
 layout (set=1, binding=0) buffer BoardState
 {
-    uvec2 fallingTilesPosition;
+    ivec2 fallingTilesPosition;
     uint  tiles[];
 };
 
@@ -37,7 +37,7 @@ void main()
         bool top = tileIndex == boardSize.x * boardSize.y;
         vec2 offset = fallingTilesPosition * (tileSize + gapSize);
         if (!top) offset.y -= (tileSize.y + gapSize.y);
-        offset.y = (boardSize.y - 1) * (tileSize.y + gapSize.y) - offset.y;
+        offset.y = (boardSize.y - 2) * (tileSize.y + gapSize.y) - offset.y;
         gl_Position = projection *  vec4(offset + tileSize * fragPosition, 0.0, 1.0);
     }
     else
