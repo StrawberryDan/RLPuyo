@@ -111,11 +111,10 @@ namespace Strawberry::RLPuyo
 		{
 			mDrawingBuffer.Begin(true, mRenderPass, 0);
 			mDrawingBuffer.BindPipeline(mPipeline);
+			mDrawingBuffer.BindDescriptorSet(mPipeline, 0, mConstantsDescriptor);
+			mDrawingBuffer.BindDescriptorSet(mPipeline, 1, mBoardStateDescriptor);
 		}
 
-
-		mDrawingBuffer.BindDescriptorSet(mPipeline, 0, mConstantsDescriptor);
-		mDrawingBuffer.BindDescriptorSet(mPipeline, 1, mBoardStateDescriptor);
 		mDrawingBuffer.Draw(6, BOARD_WIDTH * BOARD_HEIGHT);
 	}
 
