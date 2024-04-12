@@ -270,7 +270,7 @@ namespace Strawberry::RLPuyo
 			auto gapSize = CountEmptyTilesAbove(base);
 			auto chunkSize = CountVerticalTiles(base.Offset(0, -gapSize - 1));
 
-			for (int i = 0; i < gapSize; i++)
+			for (int i = 0; i < chunkSize; i++)
 			{
 				mTiles[column][base[1] + i + 1] = std::exchange(mTiles[column][base[1] + i + gapSize + 1], Tile::EMPTY);
 				affectedTiles.emplace(column, base[1] + i + 1);
