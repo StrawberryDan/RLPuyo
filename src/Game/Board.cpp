@@ -157,11 +157,14 @@ namespace Strawberry::RLPuyo
 			std::set<unsigned int> affectedColumns;
 			for (auto candidate: candidates)
 			{
-				auto group = FindConnectedTiles(candidate);
-				if (group.size() >= 3)
+				if (GetTile(candidate) != Tile::EMPTY)
 				{
-					auto columns = EliminateTiles(group);
-					for (auto c : columns) affectedColumns.emplace(c);
+					auto group = FindConnectedTiles(candidate);
+					if (group.size() >= 3)
+					{
+						auto columns = EliminateTiles(group);
+						for (auto c: columns) affectedColumns.emplace(c);
+					}
 				}
 			}
 
