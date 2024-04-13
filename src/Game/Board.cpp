@@ -296,6 +296,8 @@ namespace Strawberry::RLPuyo
 			{
 				affectedTiles.emplace(tile);
 			}
+
+			Core::Assert(GetTile({column, BOARD_HEIGHT -1}) == Tile::EMPTY || !AnyTilesAbove(FindTopmostTile({column, BOARD_HEIGHT -1})));
 		}
 
 		return affectedTiles;
