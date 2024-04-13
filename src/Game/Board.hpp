@@ -102,15 +102,7 @@ namespace Strawberry::RLPuyo
 		/// Closes the first gap between two sets of non-contiguous tiles in the given column.
 		/// @param column The column in which to close the gap.
 		/// @return The new positions of tiles which have been moved.
-		std::unordered_set<TilePosition> CloseGap(unsigned int column) noexcept;
-		/// Returns whether there are any tiles (non-empty) above the given position (non-inclusive).
-		bool AnyTilesAbove(TilePosition position) const noexcept;
-		/// Returns the position of the top most tile which is contiguously above the given position.
-		TilePosition FindTopmostTile(TilePosition position) const noexcept;
-		/// Returns the number of contiguous empty tiles directly above the given position.
-		unsigned int CountEmptyTilesAbove(TilePosition position) const noexcept;
-		/// Returns the number of non-empty tiles above the given tile, including itself.
-		unsigned int CountVerticalTiles(TilePosition position) const noexcept;
+		std::unordered_set<TilePosition> CloseGaps(unsigned int column) noexcept;
 
 
     private:

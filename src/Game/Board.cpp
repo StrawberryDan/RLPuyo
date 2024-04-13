@@ -282,7 +282,7 @@ namespace Strawberry::RLPuyo
 		for (auto tile : tiles)
 		{
 			// Remove tile.
-			mTiles[tile[0]][tile[1]] = Tile::EMPTY;
+			SetTile(tile, Tile::EMPTY);
 			// Add tile to column list.
 			columns.emplace(tile[0]);
 		}
@@ -294,111 +294,46 @@ namespace Strawberry::RLPuyo
 	std::unordered_set<TilePosition> Board::ApplyGravity(std::set<unsigned int> columns) noexcept
 	{
 		std::unordered_set<TilePosition> affectedTiles;
-
-		for (unsigned int column : columns)
+		for (int column : columns)
 		{
-			auto affectedTilesInColumn = CloseGap(column);
-			for (auto tile : affectedTilesInColumn)
-			{
-				affectedTiles.emplace(tile);
-			}
-
-			Core::Assert(GetTile({column, BOARD_HEIGHT -1}) == Tile::EMPTY || !AnyTilesAbove(FindTopmostTile({column, BOARD_HEIGHT -1})));
+			auto affectedInColumn = CloseGaps(column);
+			for (auto tile : affectedInColumn) affectedTiles.emplace(tile);
 		}
-
 		return affectedTiles;
 	}
 
 
-	std::unordered_set<TilePosition> Board::CloseGap(unsigned int column) noexcept
+	std::unordered_set<TilePosition> Board::CloseGaps(unsigned int column) noexcept
 	{
-		TilePosition base;
-		if (GetTile({column, BOARD_HEIGHT - 1}) == Tile::EMPTY)
+		std::vector<Tile> tiles;
+		Core::Optional<int> stableRow;
+
+		for (int y = BOARD_HEIGHT - 1; y >= 0; --y)
 		{
-			base = TilePosition(column, BOARD_HEIGHT);
+			Tile tile = GetTile({column, y});
+			if (tile != Tile::EMPTY)
+			{
+				tiles.emplace_back(tile);
+				SetTile({column, y}, Tile::EMPTY);
+			}
+			else if (y > 0 && tile == Tile::EMPTY && !stableRow)
+			{
+				stableRow = y + 1;
+			}
 		}
-		else
-		{
-			base = FindTopmostTile({column, BOARD_HEIGHT - 1});
-		}
+
 
 		std::unordered_set<TilePosition> affectedTiles;
-		while (AnyTilesAbove(base))
+		for (int i = 0; i < tiles.size(); ++i)
 		{
-			auto gapSize = CountEmptyTilesAbove(base);
-			auto chunkSize = CountVerticalTiles(base.Offset(0, -gapSize - 1));
-
-			for (int i = 0; i < chunkSize; i++)
+			int row = BOARD_HEIGHT - 1 - i;
+			SetTile({column, row}, tiles[i]);
+			if (!stableRow || (stableRow && row < *stableRow))
 			{
-				auto srcRow = base[1] - i - gapSize - 1;
-				auto dstRow = base[1] - i - 1;
-				mTiles[column][dstRow] = std::exchange(mTiles[column][srcRow], Tile::EMPTY);
-				affectedTiles.emplace(column, dstRow);
+				affectedTiles.emplace(column, row);
 			}
-
-			if (GetTile(base) == Tile::EMPTY) return affectedTiles;
-			base = FindTopmostTile(base);
 		}
 
 		return affectedTiles;
-	}
-
-
-	bool Board::AnyTilesAbove(TilePosition position) const noexcept
-	{
-		if (position[1] == 0) return false;
-
-		position[1] -= 1;
-		while (true)
-		{
-			if (GetTile(position) != Tile::EMPTY) return true;
-			if (position[1] == 0) return false;
-			position[1] -= 1;
-		}
-	}
-
-
-	TilePosition Board::FindTopmostTile(TilePosition position) const noexcept
-	{
-		Core::AssertNEQ(GetTile(position), Tile::EMPTY);
-
-		while (GetTile(position) != Tile::EMPTY)
-		{
-			if (position[1] == 0) return position;
-			position[1] -= 1;
-		}
-		return position.Offset(0, 1);
-	}
-
-
-	unsigned int Board::CountEmptyTilesAbove(TilePosition position) const noexcept
-	{
-		if (position[1] == 0) return 0;
-		position[1] -= 1;
-
-		unsigned int emptyTiles = 0;
-		while (GetTile(position) == Tile::EMPTY)
-		{
-			emptyTiles += 1;
-			if (position[1] == 0) break;
-			position[1] -= 1;
-		}
-
-		return emptyTiles;
-	}
-
-
-	unsigned int Board::CountVerticalTiles(TilePosition position) const noexcept
-	{
-		Core::AssertNEQ(GetTile(position), Tile::EMPTY);
-
-		unsigned int count = 0;
-		while (GetTile(position) != Tile::EMPTY)
-		{
-			if (position[1] == 0) return count;
-			position[1] -= 1;
-			count += 1;
-		}
-		return count;
 	}
 }
