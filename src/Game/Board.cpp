@@ -190,6 +190,18 @@ namespace Strawberry::RLPuyo
 
 	void Board::Resolve(std::unordered_set<TilePosition> candidates)
 	{
+#if STRAWBERRY_DEBUG
+		Tile originalState[BOARD_WIDTH][BOARD_HEIGHT];
+		for (int x = 0; x < BOARD_WIDTH; ++x)
+		{
+			for (int y = 0; y < BOARD_HEIGHT; ++y)
+			{
+				originalState[x][y] = mTiles[x][y];
+			}
+		}
+#endif
+
+
 		while (!candidates.empty())
 		{
 			std::set<unsigned int> affectedColumns;
