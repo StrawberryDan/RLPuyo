@@ -80,6 +80,8 @@ namespace Strawberry::RLPuyo
 
 
     protected:
+		/// Sets the tile at the given position to the given value.
+		void SetTile(TilePosition position, Tile tile);
 		/// Refill the queue with random tiles until it is full again.
         void ReplenishQueue();
 		/// Resolve the board after tiles have been placed.

@@ -179,6 +179,12 @@ namespace Strawberry::RLPuyo
 	}
 
 
+	void Board::SetTile(TilePosition position, Tile tile)
+	{
+		mTiles[position[0]][position[1]] = tile;
+	}
+
+
 	void Board::ReplenishQueue()
 	{
 		while (mTileQueue.size() < 8)
