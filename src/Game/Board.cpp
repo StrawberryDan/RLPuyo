@@ -86,7 +86,7 @@ namespace Strawberry::RLPuyo
 	{
 		if (auto key = event.Value<Window::Events::Key>())
 		{
-			if (key->action == Window::Input::KeyAction::Release)
+			if (mCurrentTiles && key->action == Window::Input::KeyAction::Release)
 			{
 				switch (key->keyCode)
 				{
