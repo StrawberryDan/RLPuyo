@@ -21,7 +21,10 @@ fetchcontent_declare(StrawberryWindow
 fetchcontent_declare(StrawberryVulkan
     GIT_REPOSITORY https://github.com/StrawberryDan/Vulkan.git
     GIT_TAG main)
-fetchcontent_makeavailable(StrawberryCore StrawberryWindow StrawberryVulkan)
+fetchcontent_declare(StrawberryNet
+        GIT_REPOSITORY https://github.com/StrawberryDan/Net.git
+        GIT_TAG main)
+fetchcontent_makeavailable(StrawberryCore StrawberryWindow StrawberryVulkan StrawberryNet)
 
 add_executable(RLPuyo
         src/main.cpp
@@ -30,7 +33,7 @@ add_executable(RLPuyo
         src/Game/Renderer.hpp
         src/Game/Renderer.cpp)
 set_target_properties(RLPuyo PROPERTIES CXX_STANDARD 20)
-target_link_libraries(RLPuyo PUBLIC StrawberryCore StrawberryWindow StrawberryVulkan)
+target_link_libraries(RLPuyo PUBLIC StrawberryCore StrawberryWindow StrawberryVulkan StrawberryNet)
 add_target_shaders(TARGET RLPuyo SHADERS
         ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/Board.vert
         ${CMAKE_CURRENT_SOURCE_DIR}/src/Game/Board.frag
