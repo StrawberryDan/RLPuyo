@@ -3,7 +3,6 @@
 //----------------------------------------------------------------------------------------------------------------------
 #include "Board.hpp"
 // Standard Library
-#include <algorithm>
 #include <random>
 #include <utility>
 
@@ -229,7 +228,7 @@ namespace Strawberry::RLPuyo
 	}
 
 
-	std::unordered_set<TilePosition> Board::FindConnectedTiles(TilePosition root)
+	std::unordered_set<TilePosition> Board::FindConnectedTiles(TilePosition root) const
 	{
 		std::unordered_set<TilePosition> closed, frontier{root};
 
@@ -275,7 +274,7 @@ namespace Strawberry::RLPuyo
 	}
 
 
-	std::set<unsigned int> Board::EliminateTiles(std::unordered_set<TilePosition> tiles)
+	std::set<unsigned int> Board::EliminateTiles(const std::unordered_set<TilePosition>& tiles)
 	{
 		std::set<unsigned int> columns;
 
@@ -291,7 +290,7 @@ namespace Strawberry::RLPuyo
 	}
 
 
-	std::unordered_set<TilePosition> Board::ApplyGravity(std::set<unsigned int> columns) noexcept
+	std::unordered_set<TilePosition> Board::ApplyGravity(const std::set<unsigned int>& columns) noexcept
 	{
 		std::unordered_set<TilePosition> affectedTiles;
 		for (int column : columns)

@@ -90,15 +90,15 @@ namespace Strawberry::RLPuyo
 		/// Finds tiles of the same type which are adjacent to the root tile provided.
 		/// @param root the cell from which to search.
 		/// @return The positions of all the tiles connected to the root (inclusive).
-		std::unordered_set<TilePosition> FindConnectedTiles(TilePosition root);
+		std::unordered_set<TilePosition> FindConnectedTiles(TilePosition root) const;
 		/// Removes the given tiles and returns the columns to which gravity need be applied.
 		/// @param The tiles to eliminate.
 		/// @return The set of columns to which gravity need be applied.
-		std::set<unsigned int> EliminateTiles(std::unordered_set<TilePosition> tiles);
+		std::set<unsigned int> EliminateTiles(const std::unordered_set<TilePosition>& tiles);
 		/// Applys gravity to the provided columns.
 		/// @param columns The columns to which to apply gravity.
 		/// @return The new positions of the tiles which descended due to gravity.
-		std::unordered_set<TilePosition> ApplyGravity(std::set<unsigned int> columns) noexcept;
+		std::unordered_set<TilePosition> ApplyGravity(const std::set<unsigned int>& columns) noexcept;
 		/// Closes the first gap between two sets of non-contiguous tiles in the given column.
 		/// @param column The column in which to close the gap.
 		/// @return The new positions of tiles which have been moved.
