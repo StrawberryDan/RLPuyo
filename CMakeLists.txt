@@ -31,6 +31,8 @@ add_executable(RLPuyo
         src/Game/Action.hpp
         src/Game/Board.cpp
         src/Game/Board.hpp
+        src/Game/Environment.cpp
+        src/Game/Environment.hpp
         src/Game/Renderer.cpp
         src/Game/Renderer.hpp
         src/main.cpp)

@@ -35,7 +35,7 @@ namespace Strawberry::RLPuyo
 		~Renderer();
 
 
-		void Submit(const Board& board);
+		void Submit(uint32_t boardIndex, const Board& board);
 
 
 		void Render();
@@ -67,8 +67,8 @@ namespace Strawberry::RLPuyo
 		Vulkan::DescriptorPool                mDescriptorPool;
 		Vulkan::DescriptorSet                 mConstantsDescriptor;
 		Vulkan::Buffer                        mConstantsBuffer;
-		Vulkan::DescriptorSet                 mBoardStateDescriptor;
-		Vulkan::Buffer                        mBoardStateBuffer;
+		Vulkan::DescriptorSet                 mBoardStateDescriptor[2];
+		Vulkan::Buffer                        mBoardStateBuffer[2];
 		Vulkan::CommandPool                   mCommandPool;
 		Vulkan::CommandBuffer                 mPrimaryCommandBuffer;
 		Vulkan::CommandBuffer                 mDrawingBuffer;

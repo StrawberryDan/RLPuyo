@@ -19,11 +19,8 @@ int main()
 	using namespace RLPuyo;
 
 #if RLPUYO_REALTIME
-	Strawberry::RLPuyo::Board board;
-
-
 	Window::Window window("RLPuyo", {2 * 480, 2 * 360});
-	Renderer renderer(window);
+	Environment environment(window);
 
 
 	Core::Clock updateTimer(true);
@@ -38,19 +35,18 @@ int main()
 			{
 				if (auto action = ActionFromEvent(*event))
 				{
-					board.ProcessAction(action.Unwrap());
+					environment.ProcessAction(0, action.Unwrap());
 				}
 			}
 
 			if (updateTimer.Read() >= UPDATE_INTERVAL)
 			{
-				board.Step();
+				environment.Step();
 				updateTimer.Restart();
 			}
 		}
 
-		renderer.Submit(board);
-		renderer.Render();
+		environment.Render();
 		window.SwapBuffers();
 	}
 #else

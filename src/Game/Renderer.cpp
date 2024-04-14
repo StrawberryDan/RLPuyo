@@ -26,13 +26,6 @@ static uint8_t fragmentShader[] =
 //======================================================================================================================
 //  Method Definitions
 //----------------------------------------------------------------------------------------------------------------------
-constexpr float TILE_SIZE = 20;
-constexpr float GAP_SIZE  =  2;
-
-
-//======================================================================================================================
-//  Method Definitions
-//----------------------------------------------------------------------------------------------------------------------
 namespace Strawberry::RLPuyo
 {
 	Renderer::Renderer(const Window::Window& window)
@@ -56,28 +49,29 @@ namespace Strawberry::RLPuyo
 		, mFramebuffer(mRenderPass, &mAllocator, window.GetSize().AsType<unsigned int>())
 		, mPipelineLayout(CreatePipelineLayout(mDevice, mRenderPass))
 		, mPipeline(CreatePipeline(mRenderSize.AsType<float>(), mDevice, mRenderPass, mPipelineLayout))
-		, mDescriptorPool(mDevice, 0, 2, {VkDescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1), VkDescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1)})
+		, mDescriptorPool(mDevice, 0, 4, {VkDescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1), VkDescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1)})
 		, mConstantsDescriptor(mDescriptorPool, mPipelineLayout.GetSetLayout(0))
-		, mConstantsBuffer(&mAllocator, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 16 * sizeof(float) + 2 * sizeof(uint32_t) + 2 * 2 * sizeof(float), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
-		, mBoardStateDescriptor(mDescriptorPool, mPipelineLayout.GetSetLayout(1))
-		, mBoardStateBuffer(&mAllocator, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 2 * sizeof(uint32_t) + (BOARD_WIDTH * BOARD_HEIGHT + 2) * sizeof(uint32_t), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
+		, mConstantsBuffer(&mAllocator, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 16 * sizeof(float) + 2 * sizeof(uint32_t), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
+		, mBoardStateDescriptor {
+			Vulkan::DescriptorSet(mDescriptorPool, mPipelineLayout.GetSetLayout(1)),
+			Vulkan::DescriptorSet(mDescriptorPool, mPipelineLayout.GetSetLayout(1))}
+		, mBoardStateBuffer {
+			Vulkan::Buffer(&mAllocator, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 2 * sizeof(uint32_t) + 2 * sizeof(int32_t) + (BOARD_WIDTH * BOARD_HEIGHT + 2) * sizeof(uint32_t), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT),
+			Vulkan::Buffer(&mAllocator, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 2 * sizeof(uint32_t) + 2 * sizeof(int32_t) + (BOARD_WIDTH * BOARD_HEIGHT + 2) * sizeof(uint32_t), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)}
 		, mCommandPool(*mQueue)
 		, mPrimaryCommandBuffer(mCommandPool)
 		, mDrawingBuffer(mCommandPool, VK_COMMAND_BUFFER_LEVEL_SECONDARY)
 	{
 		mConstantsDescriptor.SetUniformBuffer(0, 0, mConstantsBuffer);
-		mBoardStateDescriptor.SetStorageBuffer(0, 0, mBoardStateBuffer);
+		mBoardStateDescriptor[0].SetStorageBuffer(0, 0, mBoardStateBuffer[0]);
+		mBoardStateDescriptor[1].SetStorageBuffer(0, 0, mBoardStateBuffer[1]);
 
 		auto projection = Core::Math::Orthographic<float>(0.0, mRenderSize[0], mRenderSize[1], 0.0, -1.0, 1.0);
 		auto boardSize = Core::Math::Vector<uint32_t, 2>(BOARD_WIDTH, BOARD_HEIGHT);
-		auto tileSize = Core::Math::Vec2f(TILE_SIZE, TILE_SIZE);
-		auto gapSize = Core::Math::Vec2f(GAP_SIZE, GAP_SIZE);
 
 		Core::IO::DynamicByteBuffer constantsBufferContents;
 		constantsBufferContents.Push(projection.Transposed());
 		constantsBufferContents.Push(boardSize);
-		constantsBufferContents.Push(tileSize);
-		constantsBufferContents.Push(gapSize);
 		mConstantsBuffer.SetData(constantsBufferContents);
 	}
 
@@ -91,9 +85,11 @@ namespace Strawberry::RLPuyo
 	}
 
 
-	void Renderer::Submit(const Board& board)
+	void Renderer::Submit(uint32_t boardIndex, const Board& board)
 	{
-		Core::IO::DynamicByteBuffer mBoardStateBufferContents;
+		Core::IO::DynamicByteBuffer mBoardStateBufferContents = Core::IO::DynamicByteBuffer::WithCapacity(mBoardStateBuffer[boardIndex].GetSize());
+		mBoardStateBufferContents.Push(boardIndex);
+		mBoardStateBufferContents.Push<uint32_t>(0);
 		mBoardStateBufferContents.Push(board.FallingTilesPosition().UnwrapOr(TilePosition(0, 0)));
 		for (int y = BOARD_HEIGHT - 1; y >= 0; --y)
 		{
@@ -104,7 +100,7 @@ namespace Strawberry::RLPuyo
 		}
 		mBoardStateBufferContents.Push(static_cast<uint32_t>(board.FallingTilesBottom().UnwrapOr(Tile::EMPTY)));
 		mBoardStateBufferContents.Push(static_cast<uint32_t>(board.FallingTilesTop().UnwrapOr(Tile::EMPTY)));
-		mBoardStateBuffer.SetData(mBoardStateBufferContents);
+		mBoardStateBuffer[boardIndex].SetData(mBoardStateBufferContents);
 
 
 
@@ -115,9 +111,9 @@ namespace Strawberry::RLPuyo
 			mDrawingBuffer.Begin(true, mRenderPass, 0);
 			mDrawingBuffer.BindPipeline(mPipeline);
 			mDrawingBuffer.BindDescriptorSet(mPipeline, 0, mConstantsDescriptor);
-			mDrawingBuffer.BindDescriptorSet(mPipeline, 1, mBoardStateDescriptor);
 		}
 
+		mDrawingBuffer.BindDescriptorSet(mPipeline, 1, mBoardStateDescriptor[boardIndex]);
 		mDrawingBuffer.Draw(6, BOARD_WIDTH * BOARD_HEIGHT + 2);
 	}
 

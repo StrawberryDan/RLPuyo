@@ -5,13 +5,12 @@ layout (set=0,binding=0) uniform Constants
 {
     mat4 projection;
     uvec2 boardSize;
-    vec2 tileSize;
-    vec2 gapSize;
 };
 
 
 layout (set=1, binding=0) buffer BoardState
 {
+    uint  boardIndex;
     uvec2 fallingTilesPosition;
     uint  tiles[];
 };
@@ -24,7 +23,7 @@ layout (location = 1) in flat uint tileIndex;
 layout (location = 0) out vec4 fragColor;
 
 
-const float TILE_CENTER_RADIUS = 0.35;
+const float TILE_CENTER_RADIUS = 0.30;
 
 
 vec3 GetTileColor(uint id)
