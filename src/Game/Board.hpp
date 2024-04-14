@@ -7,6 +7,7 @@
 // Strawberry Core
 #include "Strawberry/Core/Math/Vector.hpp"
 #include "Strawberry/Core/Types/Optional.hpp"
+#include "Action.hpp"
 // Standard Library
 #include <cstdint>
 #include <deque>
@@ -69,7 +70,7 @@ namespace Strawberry::RLPuyo
         Board();
 
 
-		void ProcessEvent(Window::Event event);
+		void ProcessAction(Action action);
 
 
 		Core::Optional<Tile> FallingTilesTop() const noexcept;

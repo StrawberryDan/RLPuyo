@@ -2,6 +2,7 @@
 //  Includes
 //----------------------------------------------------------------------------------------------------------------------
 #include "Board.hpp"
+#include "Action.hpp"
 // Standard Library
 #include <random>
 #include <utility>
@@ -81,40 +82,36 @@ namespace Strawberry::RLPuyo
 	}
 
 
-	void Board::ProcessEvent(Window::Event event)
+	void Board::ProcessAction(Action action)
 	{
-		if (auto key = event.Value<Window::Events::Key>())
+		switch (action)
 		{
-			if (mCurrentTiles && key->action == Window::Input::KeyAction::Release)
-			{
-				switch (key->keyCode)
+			case Action::Left:
+				if (mCurrentTiles &&
+					mCurrentTiles->Position()[0] > 0 &&
+					GetTile(mCurrentTiles->Position().Offset(-1, 0)) == Tile::EMPTY &&
+					GetTile(mCurrentTiles->Position().Offset(-1, 1)) == Tile::EMPTY)
 				{
-					case Window::Input::KeyCode::LEFT:
-						if (mCurrentTiles->Position()[0] > 0 && mCurrentTiles &&
-							GetTile(mCurrentTiles->Position().Offset(-1, 0)) == Tile::EMPTY &&
-							GetTile(mCurrentTiles->Position().Offset(-1, 1)) == Tile::EMPTY)
-						{
-							mCurrentTiles->MoveLeft();
-						}
-						break;
-					case Window::Input::KeyCode::RIGHT:
-						if (mCurrentTiles->Position()[0] <= BOARD_WIDTH - 1 && mCurrentTiles &&
-							GetTile(mCurrentTiles->Position().Offset(1, 0)) == Tile::EMPTY &&
-							GetTile(mCurrentTiles->Position().Offset(1, 1)) == Tile::EMPTY)
-						{
-							mCurrentTiles->MoveRight();
-						}
-						break;
-					case Window::Input::KeyCode::SPACE:
-						if (mCurrentTiles)
-						{
-							mCurrentTiles->Swap();
-						}
-						break;
-					default:
-						return;
+					mCurrentTiles->MoveLeft();
 				}
-			}
+				break;
+			case Action::Right:
+				if (mCurrentTiles &&
+					mCurrentTiles->Position()[0] <= BOARD_WIDTH - 1 &&
+					GetTile(mCurrentTiles->Position().Offset(1, 0)) == Tile::EMPTY &&
+					GetTile(mCurrentTiles->Position().Offset(1, 1)) == Tile::EMPTY)
+				{
+					mCurrentTiles->MoveRight();
+				}
+				break;
+			case Action::Swap:
+				if (mCurrentTiles)
+				{
+					mCurrentTiles->Swap();
+				}
+				break;
+			default:
+				return;
 		}
 	}
 

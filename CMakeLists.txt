@@ -27,11 +27,13 @@ fetchcontent_declare(StrawberryNet
 fetchcontent_makeavailable(StrawberryCore StrawberryWindow StrawberryVulkan StrawberryNet)
 
 add_executable(RLPuyo
-        src/main.cpp
-        src/Game/Board.hpp
+        src/Game/Action.cpp
+        src/Game/Action.hpp
         src/Game/Board.cpp
+        src/Game/Board.hpp
+        src/Game/Renderer.cpp
         src/Game/Renderer.hpp
-        src/Game/Renderer.cpp)
+        src/main.cpp)
 set_target_properties(RLPuyo PROPERTIES CXX_STANDARD 20)
 target_link_libraries(RLPuyo PUBLIC StrawberryCore StrawberryWindow StrawberryVulkan StrawberryNet)
 add_target_shaders(TARGET RLPuyo SHADERS

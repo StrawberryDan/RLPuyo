@@ -3,6 +3,8 @@
 #include "Game/Board.hpp"
 #include "Game/Renderer.hpp"
 #include "Strawberry/Net/Socket/TCPListener.hpp"
+#include "Strawberry/Net/Socket/API.hpp"
+#include "Strawberry/Core/IO/Logging.hpp"
 
 
 constexpr double UPDATE_INTERVAL = 0.2;
@@ -31,7 +33,10 @@ int main()
 		{
 			while (auto event = window.NextEvent())
 			{
-				board.ProcessEvent(event.Unwrap());
+				if (auto action = ActionFromEvent(*event))
+				{
+					board.ProcessAction(action.Unwrap());
+				}
 			}
 
 			if (updateTimer.Read() >= UPDATE_INTERVAL)
@@ -45,6 +50,16 @@ int main()
 		renderer.Render();
 		window.SwapBuffers();
 	}
+#else
+	Net::Socket::API::Initialise();
+	Net::Socket::TCPListener listener = Net::Socket::TCPListener::Bind(Net::Endpoint(Net::IPv4Address(127, 0, 0, 1), 25500)).Unwrap();
+	auto client = listener.Accept().Unwrap();
+	Core::Logging::Info("Client Connected Successfully");
+
+	auto message = client.Read(1024);
+	std::cout << message->AsString() << std::endl;
+
+	Net::Socket::API::Terminate();
 #endif
 
 	return 0;
