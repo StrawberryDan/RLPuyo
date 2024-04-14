@@ -8,6 +8,8 @@
 #include "Strawberry/Core/Math/Vector.hpp"
 #include "Strawberry/Core/Types/Optional.hpp"
 #include "Action.hpp"
+// Nlohmann
+#include "nlohmann/json.hpp"
 // Standard Library
 #include <cstdint>
 #include <deque>
@@ -80,6 +82,10 @@ namespace Strawberry::RLPuyo
         void Step();
 
 
+		nlohmann::json QueueAsJson() const noexcept;
+		nlohmann::json TilesAsJson() const noexcept;
+
+
     protected:
 		/// Sets the tile at the given position to the given value.
 		void SetTile(TilePosition position, Tile tile);
@@ -116,5 +122,5 @@ namespace Strawberry::RLPuyo
         Tile                           mTiles[BOARD_WIDTH][BOARD_HEIGHT] = {};
         Core::Optional<PlaceableTiles> mCurrentTiles;
         std::deque<Tile>               mTileQueue;
-    };
+	};
 }

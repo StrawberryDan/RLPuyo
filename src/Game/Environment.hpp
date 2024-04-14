@@ -2,8 +2,11 @@
 //======================================================================================================================
 //  Includes
 //----------------------------------------------------------------------------------------------------------------------
+// RLPuyo
 #include "Board.hpp"
 #include "Renderer.hpp"
+// Nlohmann
+#include "nlohmann/json.hpp"
 
 
 //======================================================================================================================
@@ -24,6 +27,10 @@ namespace Strawberry::RLPuyo
 
 
 		void Render() noexcept;
+
+
+		nlohmann::json StateAsJson() const noexcept;
+		nlohmann::json PlayerStateAsJson(unsigned int playerIndex) const noexcept;
 
 
 	private:

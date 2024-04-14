@@ -180,6 +180,48 @@ namespace Strawberry::RLPuyo
 		mCurrentTiles.Emplace(top, bottom);
 		ReplenishQueue();
 	}
+
+
+	nlohmann::json Board::QueueAsJson() const noexcept
+	{
+		Core::AssertEQ(mTileQueue.size(), 8);
+
+
+		auto queue = nlohmann::json::array();
+		for (auto tile : mTileQueue)
+		{
+			queue.push_back(tile);
+		}
+		return queue;
+	}
+
+
+	nlohmann::json Board::TilesAsJson() const noexcept
+	{
+		auto tiles = nlohmann::json::object();
+
+		auto falling      = nlohmann::json::object();
+		falling["x"]      = mCurrentTiles->Position()[0];
+		falling["y"]      = mCurrentTiles->Position()[1];
+		falling["top"]    = FallingTilesTop().Unwrap();
+		falling["bottom"] = FallingTilesBottom().Unwrap();
+		tiles["falling"]  = falling;
+
+
+		auto board = nlohmann::json::array();
+		for (int x = 0; x < BOARD_WIDTH; ++x)
+		{
+			auto column = nlohmann::json::array();
+			for (int y = 0; y < BOARD_HEIGHT; ++y)
+			{
+				column.push_back(GetTile({x, y}));
+			}
+			board.push_back(column);
+		}
+		tiles["board"] = board;
+
+
+		return tiles;
 	}
 
 
