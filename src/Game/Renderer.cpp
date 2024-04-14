@@ -35,7 +35,7 @@ constexpr float GAP_SIZE  =  2;
 //----------------------------------------------------------------------------------------------------------------------
 namespace Strawberry::RLPuyo
 {
-	Renderer::Renderer(Window::Window& window)
+	Renderer::Renderer(const Window::Window& window)
 		: mRenderSize(window.GetSize().AsType<float>())
 		, mInstance()
 		, mPhysicalDevice(&mInstance.GetPhysicalDevices()[0])

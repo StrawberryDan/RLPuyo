@@ -31,7 +31,7 @@ namespace Strawberry::RLPuyo
 	class Renderer
 	{
 	public:
-		Renderer(Window::Window& window);
+		Renderer(const Window::Window& window);
 		~Renderer();
 
 
