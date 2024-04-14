@@ -1,10 +1,13 @@
-#include <iostream>
-#include <Strawberry/Window/Window.hpp>
+// RLPuyo
 #include "Game/Board.hpp"
+#include "Game/Environment.hpp"
 #include "Game/Renderer.hpp"
-#include "Strawberry/Net/Socket/TCPListener.hpp"
-#include "Strawberry/Net/Socket/API.hpp"
+// Strawberry Window
+#include "Strawberry/Window/Window.hpp"
+// Strawberry Net
 #include "Strawberry/Core/IO/Logging.hpp"
+#include "Strawberry/Net/Socket/API.hpp"
+#include "Strawberry/Net/Socket/TCPListener.hpp"
 
 
 constexpr double UPDATE_INTERVAL = 0.2;
