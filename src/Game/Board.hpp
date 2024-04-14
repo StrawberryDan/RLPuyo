@@ -85,6 +85,8 @@ namespace Strawberry::RLPuyo
 		void SetTile(TilePosition position, Tile tile);
 		/// Refill the queue with random tiles until it is full again.
         void ReplenishQueue();
+		/// Initialises new falling tiles from the tile queue
+		void PullTilesFromQueue();
 		/// Resolve the board after tiles have been placed.
 		/// @param candidates The set of tiles which may have formed groups.
 		void Resolve(std::unordered_set<TilePosition> candidates);

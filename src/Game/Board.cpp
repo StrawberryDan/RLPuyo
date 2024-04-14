@@ -65,6 +65,7 @@ namespace Strawberry::RLPuyo
 	{
 		// Populate Tile Queue
 		ReplenishQueue();
+		PullTilesFromQueue();
 
 		// Assign Random Values to each tile bellow the half way point down the map.
 		for (uint8_t y = BOARD_HEIGHT / 2; y < BOARD_HEIGHT; y++)
@@ -142,36 +143,43 @@ namespace Strawberry::RLPuyo
 
 	void Board::Step()
 	{
-		// Check if there is a tile currently being placed.
-		if (mCurrentTiles)
+		Core::Assert(mCurrentTiles.HasValue());
+
+
+		auto hasHitBottom = [this]{ return mCurrentTiles->Position()[1] == BOARD_HEIGHT - 2; };
+		auto hasHitAnotherTile = [this]{ return mTiles[mCurrentTiles->Position()[0]][mCurrentTiles->Position()[1] + 2] != Tile::EMPTY; };
+		// Check if the tile has landed on
+		if (hasHitBottom() || hasHitAnotherTile())
 		{
-			auto hasHitBottom = [this]{ return mCurrentTiles->Position()[1] == BOARD_HEIGHT - 2; };
-			auto hasHitAnotherTile = [this]{ return mTiles[mCurrentTiles->Position()[0]][mCurrentTiles->Position()[1] + 2] != Tile::EMPTY; };
-			// Check if the tile has landed on
-			if (hasHitBottom() || hasHitAnotherTile())
-			{
-				Core::AssertEQ(mTiles[mCurrentTiles->Position()[0]][mCurrentTiles->Position()[1] + 0], Tile::EMPTY);
-				mTiles[mCurrentTiles->Position()[0]][mCurrentTiles->Position()[1] + 0] = mCurrentTiles->Top();
-				Core::AssertEQ(mTiles[mCurrentTiles->Position()[0]][mCurrentTiles->Position()[1] + 1], Tile::EMPTY);
-				mTiles[mCurrentTiles->Position()[0]][mCurrentTiles->Position()[1] + 1] = mCurrentTiles->Bottom();
-				Resolve({mCurrentTiles->Position(), mCurrentTiles->Position().Offset(0, 1)});
-				mCurrentTiles.Reset();
-			}
-			else
-			{
-				// Descend the current placing tile
-				mCurrentTiles->Descend();
-			}
+			// Place the current tiles in place
+			Core::AssertEQ(mTiles[mCurrentTiles->Position()[0]][mCurrentTiles->Position()[1] + 0], Tile::EMPTY);
+			mTiles[mCurrentTiles->Position()[0]][mCurrentTiles->Position()[1] + 0] = mCurrentTiles->Top();
+			Core::AssertEQ(mTiles[mCurrentTiles->Position()[0]][mCurrentTiles->Position()[1] + 1], Tile::EMPTY);
+			mTiles[mCurrentTiles->Position()[0]][mCurrentTiles->Position()[1] + 1] = mCurrentTiles->Bottom();
+
+			// Resolve the board state until it is stable;
+			Resolve({mCurrentTiles->Position(), mCurrentTiles->Position().Offset(0, 1)});
+
+			// Grab fresh tiles off the queue
+			PullTilesFromQueue();
 		}
 		else
 		{
-			Tile top = mTileQueue.front();
-			mTileQueue.pop_front();
-			Tile bottom = mTileQueue.front();
-			mTileQueue.pop_front();
-			mCurrentTiles.Emplace(top, bottom);
-			ReplenishQueue();
+			// Descend the current placing tile
+			mCurrentTiles->Descend();
 		}
+	}
+
+
+	void Board::PullTilesFromQueue()
+	{
+		Tile top = mTileQueue.front();
+		mTileQueue.pop_front();
+		Tile bottom = mTileQueue.front();
+		mTileQueue.pop_front();
+		mCurrentTiles.Emplace(top, bottom);
+		ReplenishQueue();
+	}
 	}
 
 
