@@ -37,6 +37,9 @@ namespace Strawberry::RLPuyo
     };
 
 
+	using Chain = std::vector<unsigned int>;
+
+
 	using TilePosition = Core::Math::Vec2i;
 
 
@@ -79,11 +82,14 @@ namespace Strawberry::RLPuyo
 		Core::Optional<Tile> FallingTilesBottom() const noexcept;
 		Core::Optional<TilePosition> FallingTilesPosition() const noexcept;
 		Tile GetTile(TilePosition position) const noexcept;
-        void Step();
+		Core::Optional<Chain> Step();
 
 
 		nlohmann::json QueueAsJson() const noexcept;
 		nlohmann::json TilesAsJson() const noexcept;
+
+
+		static unsigned int ChainValue(const Chain& chain);
 
 
     protected:
@@ -95,7 +101,7 @@ namespace Strawberry::RLPuyo
 		void PullTilesFromQueue();
 		/// Resolve the board after tiles have been placed.
 		/// @param candidates The set of tiles which may have formed groups.
-		void Resolve(std::unordered_set<TilePosition> candidates);
+		Chain Resolve(std::unordered_set<TilePosition> candidates);
 		/// Finds tiles of the same type which are adjacent to the root tile provided.
 		/// @param root the cell from which to search.
 		/// @return The positions of all the tiles connected to the root (inclusive).

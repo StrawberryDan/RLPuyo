@@ -141,7 +141,7 @@ namespace Strawberry::RLPuyo
 	}
 
 
-	void Board::Step()
+	Core::Optional<Chain> Board::Step()
 	{
 		Core::Assert(mCurrentTiles.HasValue());
 
@@ -158,16 +158,21 @@ namespace Strawberry::RLPuyo
 			mTiles[mCurrentTiles->Position()[0]][mCurrentTiles->Position()[1] + 1] = mCurrentTiles->Bottom();
 
 			// Resolve the board state until it is stable;
-			Resolve({mCurrentTiles->Position(), mCurrentTiles->Position().Offset(0, 1)});
+			auto chain = Resolve({mCurrentTiles->Position(), mCurrentTiles->Position().Offset(0, 1)});
 
 			// Grab fresh tiles off the queue
 			PullTilesFromQueue();
+
+			// Return the chain
+			return chain;
 		}
 		else
 		{
 			// Descend the current placing tile
 			mCurrentTiles->Descend();
 		}
+
+		return Core::NullOpt;
 	}
 
 
@@ -225,6 +230,19 @@ namespace Strawberry::RLPuyo
 	}
 
 
+	unsigned int Board::ChainValue(const Chain& chain)
+	{
+		unsigned int value = 0;
+
+		for (int i = 0; i < chain.size(); ++i)
+		{
+			value += (i + 1) * chain[i];
+		}
+
+		return value;
+	}
+
+
 	void Board::SetTile(TilePosition position, Tile tile)
 	{
 		mTiles[position[0]][position[1]] = tile;
@@ -240,7 +258,7 @@ namespace Strawberry::RLPuyo
 	}
 
 
-	void Board::Resolve(std::unordered_set<TilePosition> candidates)
+	Chain Board::Resolve(std::unordered_set<TilePosition> candidates)
 	{
 #if STRAWBERRY_DEBUG
 		Tile originalState[BOARD_WIDTH][BOARD_HEIGHT];
@@ -254,8 +272,10 @@ namespace Strawberry::RLPuyo
 #endif
 
 
+		Chain chain;
 		while (!candidates.empty())
 		{
+			chain.emplace_back(0);
 			std::set<unsigned int> affectedColumns;
 			for (auto candidate: candidates)
 			{
@@ -266,12 +286,14 @@ namespace Strawberry::RLPuyo
 					{
 						auto columns = EliminateTiles(group);
 						for (auto c: columns) affectedColumns.emplace(c);
+						chain.back() += group.size();
 					}
 				}
 			}
 
 			candidates = ApplyGravity(affectedColumns);
 		}
+		return chain;
 	}
 
 

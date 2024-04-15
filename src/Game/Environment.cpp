@@ -26,8 +26,8 @@ namespace Strawberry::RLPuyo
 
 	void Environment::Step() noexcept
 	{
-		mBoards[0].Step();
-		mBoards[1].Step();
+		mSkillPoints[0] += mBoards[0].Step().Map([](auto& x) { return Board::ChainValue(x); }).UnwrapOr(0);
+		mSkillPoints[1] += mBoards[1].Step().Map([](auto& x) { return Board::ChainValue(x); }).UnwrapOr(0);
 	}
 
 
