@@ -76,6 +76,7 @@ namespace Strawberry::RLPuyo
 
 
 		void ProcessAction(Action action);
+		void ProcessDefenseSkill(unsigned int points);
 
 
 		Core::Optional<Tile> FallingTilesTop() const noexcept;

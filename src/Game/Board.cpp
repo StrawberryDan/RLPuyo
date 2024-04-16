@@ -113,7 +113,27 @@ namespace Strawberry::RLPuyo
 				break;
 			default:
 				return;
+	}
+
+
+	void Board::ProcessDefenseSkill(unsigned int points)
+	{
+		auto rows = points / 100;
+
+
+		for (int y = BOARD_HEIGHT - 1; y >= 0 && rows > 0; --y, --rows)
+		{
+			for (auto x = 0; x < BOARD_WIDTH; x++)
+			{
+				SetTile({x, y}, Tile::EMPTY);
+			}
 		}
+
+
+		std::set<unsigned int> columns;
+		for (int i = 0; i < BOARD_WIDTH; ++i) columns.emplace(i);
+		ApplyGravity(columns);
+	}
 	}
 
 
