@@ -119,7 +119,7 @@ namespace Strawberry::RLPuyo
 
 	void Board::ProcessDefenseSkill(unsigned int points)
 	{
-		auto rows = points / 100;
+		unsigned int rows = points / 100;
 
 
 		for (int y = BOARD_HEIGHT - 1; y >= 0 && rows > 0; --y, --rows)
@@ -139,7 +139,21 @@ namespace Strawberry::RLPuyo
 
 	void Board::ProcessOffensiveSkill(unsigned int points)
 	{
+		unsigned int rows = points / 100;
 
+		for (int i = 0; i < rows; ++i)
+		{
+			for (int column = 0; column < BOARD_WIDTH; ++column)
+			{
+				ShiftColumnUp(column);
+
+				do
+				{
+					SetTile({column, BOARD_HEIGHT - 1}, static_cast<Tile>(mTileDistribution(mRandomDevice)));
+				}
+				while (FindConnectedTiles({column, BOARD_HEIGHT - 1}).size() > 2);
+			}
+		}
 	}
 
 
@@ -413,7 +427,7 @@ namespace Strawberry::RLPuyo
 	std::unordered_set<TilePosition> Board::ApplyGravity(const std::set<unsigned int>& columns) noexcept
 	{
 		std::unordered_set<TilePosition> affectedTiles;
-		for (int column : columns)
+		for (unsigned int column : columns)
 		{
 			auto affectedInColumn = CloseGaps(column);
 			for (auto tile : affectedInColumn) affectedTiles.emplace(tile);
@@ -460,6 +474,17 @@ namespace Strawberry::RLPuyo
 
 	void Board::ShiftColumnUp(unsigned int column)
 	{
+		// Make sure that there is space to move tiles up
+		if (mAboveBoardTiles[column].empty() || mAboveBoardTiles[column][0] != Tile::EMPTY)
+		{
+			mAboveBoardTiles[column].insert(mAboveBoardTiles[column].begin(), Tile::EMPTY);
+		}
 
+		for (int y = -static_cast<int>(mAboveBoardTiles[column].size()); y < BOARD_HEIGHT - 1; ++y)
+		{
+			SetTile({column, y}, GetTile({column, y + 1}));
+		}
+
+		SetTile({column, BOARD_HEIGHT - 1}, Tile::EMPTY);
 	}
 }
