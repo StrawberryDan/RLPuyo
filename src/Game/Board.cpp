@@ -427,7 +427,8 @@ namespace Strawberry::RLPuyo
 		std::vector<Tile> tiles;
 		Core::Optional<int> stableRow;
 
-		for (int y = BOARD_HEIGHT - 1; y >= 0; --y)
+		int aboveBoardColSize = static_cast<int>(mAboveBoardTiles[column].size());
+		for (int y = BOARD_HEIGHT - 1; y >= -aboveBoardColSize; --y)
 		{
 			Tile tile = GetTile({column, y});
 			if (tile != Tile::EMPTY)
@@ -454,5 +455,11 @@ namespace Strawberry::RLPuyo
 		}
 
 		return affectedTiles;
+	}
+
+
+	void Board::ShiftColumnUp(unsigned int column)
+	{
+
 	}
 }
