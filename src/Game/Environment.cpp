@@ -19,6 +19,14 @@ namespace Strawberry::RLPuyo
 	{
 		switch (action)
 		{
+			case Action::OffensiveSkill:
+				if (mSkillPoints[playerIndex] >= 100)
+					mBoards[(playerIndex + 1) % 2].ProcessOffensiveSkill(std::exchange(mSkillPoints[playerIndex], 0));
+				break;
+			case Action::DefensiveSkill:
+				if (mSkillPoints[playerIndex] >= 100)
+					mBoards[playerIndex].ProcessDefenseSkill(std::exchange(mSkillPoints[playerIndex], 0));
+				break;
 			default:
 				mBoards[playerIndex].ProcessAction(action);
 		}

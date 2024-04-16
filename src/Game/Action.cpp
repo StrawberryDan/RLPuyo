@@ -23,6 +23,10 @@ namespace Strawberry::RLPuyo
 						return Action::Right;
 					case Window::Input::KeyCode::SPACE:
 						return Action::Swap;
+					case Window::Input::KeyCode::Q:
+						return Action::OffensiveSkill;
+					case Window::Input::KeyCode::W:
+						return Action::DefensiveSkill;
 					default:
 						break;
 				}
