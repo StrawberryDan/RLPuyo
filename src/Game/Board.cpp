@@ -135,6 +135,11 @@ namespace Strawberry::RLPuyo
 		for (int i = 0; i < BOARD_WIDTH; ++i) columns.emplace(i);
 		ApplyGravity(columns);
 	}
+
+
+	void Board::ProcessOffensiveSkill(unsigned int points)
+	{
+
 	}
 
 
@@ -158,7 +163,17 @@ namespace Strawberry::RLPuyo
 
 	Tile Board::GetTile(TilePosition position) const noexcept
 	{
-		return mTiles[position[0]][position[1]];
+		if (position[1] < 0)
+		{
+			const auto& column = mAboveBoardTiles[position[0]];
+			const int index = static_cast<int>(column.size()) + position[1];
+			if (index < 0) return Tile::EMPTY;
+			else return column[index];
+		}
+		else
+		{
+			return mTiles[position[0]][position[1]];
+		}
 	}
 
 
@@ -173,10 +188,10 @@ namespace Strawberry::RLPuyo
 		if (hasHitBottom() || hasHitAnotherTile())
 		{
 			// Place the current tiles in place
-			Core::AssertEQ(mTiles[mCurrentTiles->Position()[0]][mCurrentTiles->Position()[1] + 0], Tile::EMPTY);
-			mTiles[mCurrentTiles->Position()[0]][mCurrentTiles->Position()[1] + 0] = mCurrentTiles->Top();
-			Core::AssertEQ(mTiles[mCurrentTiles->Position()[0]][mCurrentTiles->Position()[1] + 1], Tile::EMPTY);
-			mTiles[mCurrentTiles->Position()[0]][mCurrentTiles->Position()[1] + 1] = mCurrentTiles->Bottom();
+			Core::AssertEQ(GetTile(mCurrentTiles->Position().Offset(0, 0)), Tile::EMPTY);
+			SetTile(mCurrentTiles->Position().Offset(0, 0), mCurrentTiles->Top());
+			Core::AssertEQ(GetTile(mCurrentTiles->Position().Offset(0, 1)), Tile::EMPTY);
+			SetTile(mCurrentTiles->Position().Offset(0, 1), mCurrentTiles->Bottom());
 
 			// Resolve the board state until it is stable;
 			auto chain = Resolve({mCurrentTiles->Position(), mCurrentTiles->Position().Offset(0, 1)});
@@ -266,7 +281,22 @@ namespace Strawberry::RLPuyo
 
 	void Board::SetTile(TilePosition position, Tile tile)
 	{
-		mTiles[position[0]][position[1]] = tile;
+		if (position[1] < 0)
+		{
+			auto& column = mAboveBoardTiles[position[0]];
+			// Make sure that the column vector is big enough
+			while (column.size() < -position[1])
+			{
+				column.insert(column.begin(), Tile::EMPTY);
+			}
+
+			auto index = static_cast<int>(column.size()) + position[1];
+			column[index] = tile;
+		}
+		else
+		{
+			mTiles[position[0]][position[1]] = tile;
+		}
 	}
 
 

@@ -77,6 +77,7 @@ namespace Strawberry::RLPuyo
 
 		void ProcessAction(Action action);
 		void ProcessDefenseSkill(unsigned int points);
+		void ProcessOffensiveSkill(unsigned int points);
 
 
 		Core::Optional<Tile> FallingTilesTop() const noexcept;
@@ -119,6 +120,8 @@ namespace Strawberry::RLPuyo
 		/// @param column The column in which to close the gap.
 		/// @return The new positions of tiles which have been moved.
 		std::unordered_set<TilePosition> CloseGaps(unsigned int column) noexcept;
+		/// Shifts the contents of a column up by one tile;
+		void ShiftColumnUp(unsigned int column);
 
 
     private:
@@ -127,6 +130,7 @@ namespace Strawberry::RLPuyo
 
 
         Tile                           mTiles[BOARD_WIDTH][BOARD_HEIGHT] = {};
+		std::vector<Tile>              mAboveBoardTiles[BOARD_WIDTH];
         Core::Optional<PlaceableTiles> mCurrentTiles;
         std::deque<Tile>               mTileQueue;
 	};
