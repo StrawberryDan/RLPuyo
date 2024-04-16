@@ -112,7 +112,8 @@ namespace Strawberry::RLPuyo
 				}
 				break;
 			default:
-				return;
+				Core::Unreachable();
+		}
 	}
 
 
