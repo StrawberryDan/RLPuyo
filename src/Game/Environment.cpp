@@ -11,6 +11,7 @@ namespace Strawberry::RLPuyo
 {
 	Environment::Environment(const Window::Window& window)
 		: mRenderer(window)
+		, mSkillPoints{0, 0}
 	{}
 
 
