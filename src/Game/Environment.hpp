@@ -17,6 +17,7 @@ namespace Strawberry::RLPuyo
 	class Environment
 	{
 	public:
+		Environment();
 		Environment(const Window::Window& window);
 
 
@@ -38,6 +39,6 @@ namespace Strawberry::RLPuyo
 		Board        mBoards[2];
 
 
-		Renderer mRenderer;
+		Core::Optional<Renderer> mRenderer;
 	};
 }

@@ -2,13 +2,18 @@
 //  Includes
 //----------------------------------------------------------------------------------------------------------------------
 #include "Environment.hpp"
-
+#include "Strawberry/Window/Window.hpp"
 
 //======================================================================================================================
 //  Method Definitions
 //----------------------------------------------------------------------------------------------------------------------
 namespace Strawberry::RLPuyo
 {
+	Environment::Environment()
+		: mSkillPoints{0, 0}
+	{}
+
+
 	Environment::Environment(const Window::Window& window)
 		: mRenderer(window)
 		, mSkillPoints{0, 0}
@@ -42,9 +47,9 @@ namespace Strawberry::RLPuyo
 
 	void Environment::Render() noexcept
 	{
-		mRenderer.Submit(0, mBoards[0]);
-		mRenderer.Submit(1, mBoards[1]);
-		mRenderer.Render();
+		mRenderer->Submit(0, mBoards[0]);
+		mRenderer->Submit(1, mBoards[1]);
+		mRenderer->Render();
 	}
 
 
