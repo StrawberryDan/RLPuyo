@@ -62,6 +62,7 @@ namespace Strawberry::RLPuyo
 
 
 	Board::Board()
+		: mRandomDevice(std::random_device()())
 	{
 		// Populate Tile Queue
 		ReplenishQueue();

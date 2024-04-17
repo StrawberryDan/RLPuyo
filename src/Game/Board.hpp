@@ -125,7 +125,7 @@ namespace Strawberry::RLPuyo
 
 
     private:
-        std::random_device                                          mRandomDevice;
+        std::default_random_engine                                  mRandomDevice;
         std::uniform_int_distribution<std::underlying_type_t<Tile>> mTileDistribution{1, 4};
 
 
