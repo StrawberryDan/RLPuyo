@@ -11,6 +11,7 @@ namespace Strawberry::RLPuyo
 {
 	enum class Action
 	{
+		None,
 		Left,
 		Right,
 		Swap,
