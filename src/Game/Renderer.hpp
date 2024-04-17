@@ -56,7 +56,7 @@ namespace Strawberry::RLPuyo
 
 		Vulkan::Instance                      mInstance;
 		const Vulkan::PhysicalDevice*         mPhysicalDevice;
-		const unsigned int                    mQueueFamily;
+		unsigned int                          mQueueFamily;
 		Vulkan::Device                        mDevice;
 		Vulkan::NaiveAllocator                mAllocator;
 		Core::ReflexivePointer<Vulkan::Queue> mQueue;
