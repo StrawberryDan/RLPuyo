@@ -30,6 +30,7 @@ namespace Strawberry::RLPuyo
 		void Render() noexcept;
 
 
+		std::tuple<int, int> GetRewards() const noexcept;
 		bool GameOver() const noexcept;
 
 
@@ -38,6 +39,7 @@ namespace Strawberry::RLPuyo
 
 
 	private:
+		int          mPreviousRewards[2];
 		unsigned int mSkillPoints[2];
 		Board        mBoards[2];
 

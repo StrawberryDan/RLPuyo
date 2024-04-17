@@ -42,6 +42,29 @@ namespace Strawberry::RLPuyo
 	{
 		mSkillPoints[0] += mBoards[0].Step().Map([](auto& x) { return Board::ChainValue(x); }).UnwrapOr(0);
 		mSkillPoints[1] += mBoards[1].Step().Map([](auto& x) { return Board::ChainValue(x); }).UnwrapOr(0);
+
+		if (GameOver())
+		{
+			if (mBoards[0].HasLost())
+			{
+				mPreviousRewards[0] = -1;
+				mPreviousRewards[1] = 0;
+			}
+			else if (mBoards[1].HasLost())
+			{
+				mPreviousRewards[0] = 0;
+				mPreviousRewards[1] = -1;
+			}
+			else
+			{
+				Core::Unreachable();
+			}
+		}
+		else
+		{
+			mPreviousRewards[0] = -1 + static_cast<int>(mSkillPoints[0]);
+			mPreviousRewards[1] = -1 + static_cast<int>(mSkillPoints[1]);
+		}
 	}
 
 
@@ -50,6 +73,12 @@ namespace Strawberry::RLPuyo
 		mRenderer->Submit(0, mBoards[0]);
 		mRenderer->Submit(1, mBoards[1]);
 		mRenderer->Render();
+	}
+
+
+	std::tuple<int, int> Environment::GetRewards() const noexcept
+	{
+		return {mPreviousRewards[0], mPreviousRewards[1]};
 	}
 
 
@@ -77,9 +106,10 @@ namespace Strawberry::RLPuyo
 	{
 		auto playerState = nlohmann::json::object();
 
-		playerState["ap"]    = mSkillPoints[playerIndex];
-		playerState["queue"] = mBoards[playerIndex].QueueAsJson();
-		playerState["tiles"] = mBoards[playerIndex].TilesAsJson();
+		playerState["ap"]     = mSkillPoints[playerIndex];
+		playerState["queue"]  = mBoards[playerIndex].QueueAsJson();
+		playerState["tiles"]  = mBoards[playerIndex].TilesAsJson();
+		playerState["reward"] = mPreviousRewards[playerIndex];
 
 		return playerState;
 	}
