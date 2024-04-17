@@ -85,6 +85,7 @@ namespace Strawberry::RLPuyo
 		Core::Optional<TilePosition> FallingTilesPosition() const noexcept;
 		Tile GetTile(TilePosition position) const noexcept;
 		Core::Optional<Chain> Step();
+		bool HasLost() const noexcept;
 
 
 		nlohmann::json QueueAsJson() const noexcept;

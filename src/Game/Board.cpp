@@ -227,6 +227,12 @@ namespace Strawberry::RLPuyo
 	}
 
 
+	bool Board::HasLost() const noexcept
+	{
+		return GetTile({(BOARD_WIDTH + 1) / 2, -2}) != Tile::EMPTY || GetTile({(BOARD_WIDTH + 1) / 2, -1}) != Tile::EMPTY;
+	}
+
+
 	void Board::PullTilesFromQueue()
 	{
 		Tile top = mTileQueue.front();
