@@ -53,10 +53,17 @@ namespace Strawberry::RLPuyo
 	}
 
 
+	bool Environment::GameOver() const noexcept
+	{
+		return mBoards[0].HasLost() || mBoards[1].HasLost();
+	}
+
+
 	nlohmann::json Environment::StateAsJson() const noexcept
 	{
 		auto state = nlohmann::json::object();
 
+		state["gameOver"] = GameOver();
 		auto players = nlohmann::json::array();
 		players[0] = PlayerStateAsJson(0);
 		players[1] = PlayerStateAsJson(1);

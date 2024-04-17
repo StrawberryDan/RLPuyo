@@ -30,6 +30,9 @@ namespace Strawberry::RLPuyo
 		void Render() noexcept;
 
 
+		bool GameOver() const noexcept;
+
+
 		nlohmann::json StateAsJson() const noexcept;
 		nlohmann::json PlayerStateAsJson(unsigned int playerIndex) const noexcept;
 
