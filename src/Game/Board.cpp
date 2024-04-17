@@ -68,7 +68,7 @@ namespace Strawberry::RLPuyo
 		ReplenishQueue();
 		PullTilesFromQueue();
 
-		// Assign Random Values to each tile bellow the half way point down the map.
+		// Assign Random Values to each tile bellow the half-way point down the map.
 		for (uint8_t y = BOARD_HEIGHT / 2; y < BOARD_HEIGHT; y++)
 		{
 			for (uint8_t x = 0; x < BOARD_WIDTH; x++)
