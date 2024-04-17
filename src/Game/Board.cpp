@@ -88,6 +88,8 @@ namespace Strawberry::RLPuyo
 	{
 		switch (action)
 		{
+			case Action::None:
+				break;
 			case Action::Left:
 				if (mCurrentTiles &&
 					mCurrentTiles->Position()[0] > 0 &&
