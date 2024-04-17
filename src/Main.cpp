@@ -10,14 +10,24 @@
 #include "Strawberry/Net/Socket/TCPListener.hpp"
 
 
+using namespace Strawberry;
+using namespace RLPuyo;
+
+
 constexpr double UPDATE_INTERVAL = 0.2;
+
+
+std::vector<Action> ActionsFromMessage(const Core::IO::DynamicByteBuffer& bytes)
+{
+	return {
+		static_cast<Action>(bytes[0]),
+		static_cast<Action>(bytes[1]),
+	};
+}
 
 
 int main()
 {
-	using namespace Strawberry;
-	using namespace RLPuyo;
-
 #if RLPUYO_REALTIME
 	Window::Window window("RLPuyo", {2 * 480, 2 * 360});
 	Environment environment(window);
@@ -55,8 +65,25 @@ int main()
 	auto client = listener.Accept().Unwrap();
 	Core::Logging::Info("Client Connected Successfully");
 
-	auto message = client.Read(1024);
-	std::cout << message->AsString() << std::endl;
+	Environment environment;
+	while (true)
+	{
+		auto state = environment.StateAsJson().dump();
+		client.Write(state).Unwrap();
+
+		auto actionMessage = client.ReadAll(2).Unwrap();
+		std::vector<Action> chosenActions = ActionsFromMessage(actionMessage);
+
+		if (environment.GameOver())
+		{
+			environment = Environment();
+		}
+
+		environment.ProcessAction(0, chosenActions[0]);
+		environment.ProcessAction(1, chosenActions[1]);
+
+		environment.Step();
+	}
 
 	Net::Socket::API::Terminate();
 #endif
