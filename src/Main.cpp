@@ -26,6 +26,51 @@ std::vector<Action> ActionsFromMessage(const Core::IO::DynamicByteBuffer& bytes)
 }
 
 
+void HandleConnection()
+{
+	Net::Socket::TCPListener listener = Net::Socket::TCPListener::Bind(Net::Endpoint(Net::IPv4Address(127, 0, 0, 1), 25500)).Unwrap();
+	auto client = listener.Accept().Unwrap();
+	Core::Logging::Info("Client Connected Successfully");
+
+	Environment environment;
+	while (true)
+	{
+		auto state = environment.StateAsJson().dump();
+		auto writeResult = client.Write(state);
+		if (writeResult.IsErr()) switch (writeResult.Err())
+		{
+			case Core::IO::Error::Closed:
+				return;
+			default:
+				Core::Unreachable();
+		}
+
+		if (environment.GameOver())
+		{
+			environment = Environment();
+			continue;
+		}
+
+		auto actionMessage = client.ReadAll(2);
+		if (actionMessage.IsErr()) switch (actionMessage.Err())
+			{
+				case Core::IO::Error::Closed:
+					return;
+				default:
+					Core::Unreachable();
+			}
+
+		std::vector<Action> chosenActions = ActionsFromMessage(actionMessage.Unwrap());
+
+
+		environment.ProcessAction(0, chosenActions[0]);
+		environment.ProcessAction(1, chosenActions[1]);
+
+		environment.Step();
+	}
+}
+
+
 int main()
 {
 #if RLPUYO_REALTIME
@@ -61,28 +106,10 @@ int main()
 	}
 #else
 	Net::Socket::API::Initialise();
-	Net::Socket::TCPListener listener = Net::Socket::TCPListener::Bind(Net::Endpoint(Net::IPv4Address(127, 0, 0, 1), 25500)).Unwrap();
-	auto client = listener.Accept().Unwrap();
-	Core::Logging::Info("Client Connected Successfully");
 
-	Environment environment;
 	while (true)
 	{
-		auto state = environment.StateAsJson().dump();
-		client.Write(state).Unwrap();
-
-		auto actionMessage = client.ReadAll(2).Unwrap();
-		std::vector<Action> chosenActions = ActionsFromMessage(actionMessage);
-
-		if (environment.GameOver())
-		{
-			environment = Environment();
-		}
-
-		environment.ProcessAction(0, chosenActions[0]);
-		environment.ProcessAction(1, chosenActions[1]);
-
-		environment.Step();
+		HandleConnection();
 	}
 
 	Net::Socket::API::Terminate();
