@@ -37,7 +37,7 @@ namespace Strawberry::RLPuyo
 		, mAllocator(mDevice)
 		, mQueue(mDevice.GetQueue(mQueueFamily, 0))
 		, mSurface(window, mDevice)
-		, mSwapchain(*mQueue, mSurface, window.GetSize())
+		, mSwapchain(*mQueue, mSurface, window.GetSize(), RLPUYO_REALTIME ? VK_PRESENT_MODE_FIFO_KHR : VK_PRESENT_MODE_IMMEDIATE_KHR)
 		, mRenderPass(Vulkan::RenderPass::Builder(mDevice)
 							  .WithColorAttachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_ATTACHMENT_LOAD_OP_CLEAR,
 												   VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_UNDEFINED,
