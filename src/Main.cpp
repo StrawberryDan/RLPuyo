@@ -14,7 +14,8 @@ using namespace Strawberry;
 using namespace RLPuyo;
 
 
-constexpr double UPDATE_INTERVAL = 0.2;
+constexpr double UPDATE_INTERVAL = RLPUYO_REALTIME ? 0.2 : 0.001;
+constexpr float  RENDER_INTERVAL = 0.0;
 
 
 std::vector<Action> ActionsFromMessage(const Core::IO::DynamicByteBuffer& bytes)
@@ -26,47 +27,61 @@ std::vector<Action> ActionsFromMessage(const Core::IO::DynamicByteBuffer& bytes)
 }
 
 
-void HandleConnection()
+void HandleConnection(Window::Window& window)
 {
 	Net::Socket::TCPListener listener = Net::Socket::TCPListener::Bind(Net::Endpoint(Net::IPv4Address(127, 0, 0, 1), 25500)).Unwrap();
 	auto client = listener.Accept().Unwrap();
 	Core::Logging::Info("Client Connected Successfully");
 
-	Environment environment;
-	while (true)
+	Core::Optional<Environment> environment(window);
+	Core::Clock mUpdateTimer;
+	Core::Clock mRenderTimer;
+	while (!window.CloseRequested())
 	{
-		auto state = environment.StateAsJson().dump();
-		auto writeResult = client.Write(state);
-		if (writeResult.IsErr()) switch (writeResult.Err())
-		{
-			case Core::IO::Error::Closed:
-				return;
-			default:
-				Core::Unreachable();
-		}
+		Window::PollInput();
 
-		if (environment.GameOver())
+		if (mUpdateTimer.Read() > UPDATE_INTERVAL)
 		{
-			environment = Environment();
-			continue;
-		}
+			auto state = environment->StateAsJson().dump();
+			auto writeResult = client.Write(state);
+			if (writeResult.IsErr())
+				switch (writeResult.Err())
+				{
+					case Core::IO::Error::Closed:
+						return;
+					default:
+						Core::Unreachable();
+				}
 
-		auto actionMessage = client.ReadAll(2);
-		if (actionMessage.IsErr()) switch (actionMessage.Err())
+			if (environment->GameOver())
 			{
-				case Core::IO::Error::Closed:
-					return;
-				default:
-					Core::Unreachable();
+				environment.Emplace(window);
+				continue;
 			}
 
-		std::vector<Action> chosenActions = ActionsFromMessage(actionMessage.Unwrap());
+			auto actionMessage = client.ReadAll(2);
+			if (actionMessage.IsErr())
+				switch (actionMessage.Err())
+				{
+					case Core::IO::Error::Closed:
+						return;
+					default:
+						Core::Unreachable();
+				}
 
+			std::vector<Action> chosenActions = ActionsFromMessage(actionMessage.Unwrap());
+			environment->ProcessAction(0, chosenActions[0]);
+			environment->ProcessAction(1, chosenActions[1]);
+			environment->Step();
+			mUpdateTimer.Restart();
+		}
 
-		environment.ProcessAction(0, chosenActions[0]);
-		environment.ProcessAction(1, chosenActions[1]);
-
-		environment.Step();
+		if (mRenderTimer.Read() > (RENDER_INTERVAL <= 0.0 ? UPDATE_INTERVAL : RENDER_INTERVAL))
+		{
+			environment->Render();
+			mRenderTimer.Restart();
+			window.SwapBuffers();
+		}
 	}
 }
 
@@ -107,9 +122,11 @@ int main()
 #else
 	Net::Socket::API::Initialise();
 
-	while (true)
+	Window::Window window("RLPuyo", {2 * 480, 2 * 360});
+
+	while (!window.CloseRequested())
 	{
-		HandleConnection();
+		HandleConnection(window);
 	}
 
 	Net::Socket::API::Terminate();
