@@ -13,6 +13,11 @@
 //----------------------------------------------------------------------------------------------------------------------
 namespace Strawberry::RLPuyo
 {
+	PlaceableTiles::PlaceableTiles(Tile first, Tile second)
+		: mPosition((BOARD_WIDTH - 1) / 2, -2)
+		, mTiles{first, second}
+	{}
+
 	void PlaceableTiles::MoveLeft()
 	{
 		if (mPosition[0] > 0)
@@ -231,7 +236,7 @@ namespace Strawberry::RLPuyo
 
 	bool Board::HasLost() const noexcept
 	{
-		return GetTile({(BOARD_WIDTH + 1) / 2, -2}) != Tile::EMPTY || GetTile({(BOARD_WIDTH + 1) / 2, -1}) != Tile::EMPTY;
+		return GetTile({(BOARD_WIDTH - 1) / 2, -2}) != Tile::EMPTY || GetTile({(BOARD_WIDTH - 1) / 2, -1}) != Tile::EMPTY;
 	}
 
 

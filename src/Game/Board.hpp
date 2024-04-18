@@ -23,7 +23,7 @@
 //----------------------------------------------------------------------------------------------------------------------
 namespace Strawberry::RLPuyo
 {
-    static constexpr uint8_t BOARD_WIDTH  = 10;
+    static constexpr uint8_t BOARD_WIDTH  = 11;
     static constexpr uint8_t BOARD_HEIGHT = 20;
 
 
@@ -46,10 +46,7 @@ namespace Strawberry::RLPuyo
     class PlaceableTiles
     {
     public:
-        PlaceableTiles(Tile first, Tile second)
-            : mPosition((BOARD_WIDTH + 1) / 2, -2)
-            , mTiles{first, second}
-        {}
+        PlaceableTiles(Tile first, Tile second);
 
 
         void MoveLeft();
