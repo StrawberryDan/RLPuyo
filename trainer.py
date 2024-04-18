@@ -65,8 +65,12 @@ SERVER = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 SERVER.connect(("127.0.0.1", 25500))
 
 
+def RandomActions():
+    return [random.randint(0, ACTION_COUNT - 1), random.randint(0, ACTION_COUNT - 1)]
+
+
 def SelectActions():
-    return [0, 0]
+    return RandomActions()
 
 
 for i in range(EPISODE_COUNT):
