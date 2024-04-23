@@ -99,7 +99,7 @@ class Network(nn.Module):
             nn.ReLU(),
             nn.Linear(16, 6),
             nn.ReLU(),
-            nn.Softmax(),
+            nn.Softmax(dim=0),
         )
 
     def forward(self, x):
