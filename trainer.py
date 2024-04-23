@@ -1,5 +1,7 @@
 import random
 import socket
+from collections import deque
+
 import torch
 import json
 
@@ -11,6 +13,7 @@ EPISODE_COUNT = 500
 BOARD_WIDTH = None
 BOARD_HEIGHT = None
 ACTION_COUNT = 6
+EXPERIENCE_BUFFER_SIZE = 10000
 
 
 # Game State class
@@ -26,10 +29,11 @@ class State:
         if BOARD_HEIGHT is None:
             BOARD_HEIGHT = len(self.data['players'][0]['tiles']['board'][0])
 
-
     def GameOver(self):
         return self.data['gameOver']
 
+    def Reward(self, playerIndex):
+        return self.data['players'][playerIndex]['reward']
 
     def GetPerception(self, playerIndex):
         perception = torch.zeros([BOARD_WIDTH, BOARD_HEIGHT, 4], dtype=torch.float)
@@ -40,8 +44,34 @@ class State:
                 if tile != 0:
                     perception[x][y][tile - 1] = 1
 
+        x = self.data['players'][playerIndex]['tiles']['falling']['x']
+        y = self.data['players'][playerIndex]['tiles']['falling']['y']
+        perception[x][y + 0] = self.data['players'][playerIndex]['tiles']['falling']['top']
+        perception[x][y + 1] = self.data['players'][playerIndex]['tiles']['falling']['bottom']
+
         return perception
 
+
+class Experience:
+    def __init__(self, originalState: State, resultingState: State, actions: list[int], rewards: list[int]):
+        self.originalState = originalState
+        self.resultingState = resultingState
+        self.action = actions
+        self.reward = rewards
+
+
+class ExperienceBuffer:
+    def __init__(self):
+        self.memory = deque(maxlen=EXPERIENCE_BUFFER_SIZE)
+
+    def Push(self, experience: Experience):
+        self.memory.append(experience)
+
+    def Sample(self, count: int):
+        return random.sample(self.memory, count)
+
+    def Size(self):
+        return len(self.memory)
 
 
 # Model class
@@ -91,8 +121,10 @@ class Network(nn.Module):
         return actions
 
 
-# Initialise model
+# Initialise model and experience buffer
 MODEL = None
+EXPERIENCE_BUFFER = ExperienceBuffer()
+
 
 # Connect to Puyo-Puyo server
 SERVER = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -117,8 +149,16 @@ def SelectActions(state):
 
 
 for i in range(EPISODE_COUNT):
+    state = None
+    previousState = None
+    selected_actions = None
     while True:
+        previousState = state
         state = State(SERVER.recv(4096))
+
+        if state is not None and previousState is not None and selected_actions is not None:
+            experience = Experience(previousState, state, selected_actions, [state.Reward(0), state.Reward(1)])
+            EXPERIENCE_BUFFER.Push(experience)
 
         if MODEL is None:
             MODEL = Network().to("cuda")
