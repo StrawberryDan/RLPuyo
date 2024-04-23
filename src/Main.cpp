@@ -27,16 +27,14 @@ std::vector<Action> ActionsFromMessage(const Core::IO::DynamicByteBuffer& bytes)
 }
 
 
-void HandleConnection(Window::Window& window)
+void HandleConnection(Net::Socket::TCPSocket client)
 {
-	Net::Socket::TCPListener listener = Net::Socket::TCPListener::Bind(Net::Endpoint(Net::IPv4Address(127, 0, 0, 1), 25500)).Unwrap();
-	auto client = listener.Accept().Unwrap();
-	Core::Logging::Info("Client Connected Successfully");
+	Window::Window window("RLPuyo", {2 * 480, 2 * 360});
 
 	Core::Optional<Environment> environment(window);
 	Core::Clock mUpdateTimer;
 	Core::Clock mRenderTimer;
-	while (!window.CloseRequested())
+	while (true)
 	{
 		Window::PollInput();
 
@@ -122,11 +120,13 @@ int main()
 #else
 	Net::Socket::API::Initialise();
 
-	Window::Window window("RLPuyo", {2 * 480, 2 * 360});
-
-	while (!window.CloseRequested())
+	while (true)
 	{
-		HandleConnection(window);
+		Net::Socket::TCPListener listener = Net::Socket::TCPListener::Bind(Net::Endpoint(Net::IPv4Address(127, 0, 0, 1), 25500)).Unwrap();
+		auto client = listener.Accept().Unwrap();
+		Core::Logging::Info("Client Connected Successfully");
+
+		HandleConnection(std::move(client));
 	}
 
 	Net::Socket::API::Terminate();
