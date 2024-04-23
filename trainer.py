@@ -97,7 +97,7 @@ class Network(nn.Module):
             nn.ReLU(),
             nn.Linear(64, 16),
             nn.ReLU(),
-            nn.Linear(16, 6),
+            nn.Linear(16, ACTION_COUNT),
             nn.ReLU(),
             nn.Softmax(dim=0),
         )
