@@ -129,6 +129,7 @@ EXPERIENCE_BUFFER = ExperienceBuffer()
 # Connect to Puyo-Puyo server
 SERVER = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 SERVER.connect(("127.0.0.1", 25500))
+print("Connected to Server!")
 
 
 def RandomActions():
