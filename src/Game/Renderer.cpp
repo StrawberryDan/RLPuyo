@@ -147,7 +147,13 @@ namespace Strawberry::RLPuyo
 		});
 		mPrimaryCommandBuffer.End();
 		mQueue->Submit(mPrimaryCommandBuffer);
+
 		mSwapchain.Present();
+		if (mSwapchain.IsOutOfDate())
+		{
+			std::destroy_at(&mSwapchain);
+			std::construct_at(&mSwapchain, *mQueue, mSurface, mRenderSize.AsType<int>(), RLPUYO_REALTIME ? VK_PRESENT_MODE_FIFO_KHR : VK_PRESENT_MODE_IMMEDIATE_KHR);
+		}
 	}
 
 
