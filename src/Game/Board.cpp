@@ -36,6 +36,12 @@ namespace Strawberry::RLPuyo
 	}
 
 
+	void PlaceableTiles::MoveUp()
+	{
+		mPosition[1] -= 1;
+	}
+
+
 	void PlaceableTiles::Descend()
 	{
 		mPosition[1] += 1;
@@ -209,6 +215,11 @@ namespace Strawberry::RLPuyo
 		// Check if the tile has landed on
 		if (hasHitBottom() || hasHitAnotherTile())
 		{
+			while (GetTile(mCurrentTiles->Position().Offset(0, 0)) != Tile::EMPTY || GetTile(mCurrentTiles->Position().Offset(0, 1)) != Tile::EMPTY)
+			{
+				mCurrentTiles->MoveUp();
+			}
+
 			// Place the current tiles in place
 			Core::AssertEQ(GetTile(mCurrentTiles->Position().Offset(0, 0)), Tile::EMPTY);
 			SetTile(mCurrentTiles->Position().Offset(0, 0), mCurrentTiles->Top());
