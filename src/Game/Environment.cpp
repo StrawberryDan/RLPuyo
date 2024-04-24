@@ -78,7 +78,7 @@ namespace Strawberry::RLPuyo
 
 	std::tuple<int, int> Environment::GetRewards() const noexcept
 	{
-		return {mPreviousRewards[0], mPreviousRewards[1]};
+		return {mPreviousRewards[0] + (mBoards[1].HasLost() ? 1000 : 0) - (mBoards[0].HasLost() ? 1000 : 0), mPreviousRewards[1] + (mBoards[0].HasLost() ? 1000 : 0) - (mBoards[1].HasLost() ? 1000 : 0)};
 	}
 
 
