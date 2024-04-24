@@ -1,3 +1,4 @@
+import math
 import random
 import socket
 from collections import deque
@@ -10,10 +11,15 @@ from torch import nn
 assert torch.cuda.is_available()
 
 EPISODE_COUNT = 500
+BATCH_SIZE = 16
 BOARD_WIDTH = None
 BOARD_HEIGHT = None
 ACTION_COUNT = 6
 EXPERIENCE_BUFFER_SIZE = 10000
+LEARNING_RATE = 1e-4
+DISCOUNT_FACTOR = 0.9
+EXPLORATION_PROBABILITY = 0.8
+EPSILON = EXPLORATION_PROBABILITY
 
 
 # Game State class
@@ -36,7 +42,7 @@ class State:
         return self.data['players'][playerIndex]['reward']
 
     def GetPerception(self, playerIndex):
-        perception = torch.zeros([BOARD_WIDTH, BOARD_HEIGHT, 4], dtype=torch.float)
+        perception = torch.zeros([BOARD_WIDTH, BOARD_HEIGHT, 5], dtype=torch.float)
         for x in range(BOARD_WIDTH):
             for y in range(BOARD_HEIGHT):
                 tile = self.data['players'][playerIndex]['tiles']['board'][x][y]
@@ -46,8 +52,13 @@ class State:
 
         x = self.data['players'][playerIndex]['tiles']['falling']['x']
         y = self.data['players'][playerIndex]['tiles']['falling']['y']
-        perception[x][y + 0] = self.data['players'][playerIndex]['tiles']['falling']['top']
-        perception[x][y + 1] = self.data['players'][playerIndex]['tiles']['falling']['bottom']
+        top = self.data['players'][playerIndex]['tiles']['falling']['top']
+        bottom = self.data['players'][playerIndex]['tiles']['falling']['bottom']
+        perception[x][y + 0][top - 1] = 1
+        perception[x][y + 1][bottom - 1] = 1
+
+        perception[x][y + 0][4] = 1
+        perception[x][y + 1][4] = 1
 
         return perception
 
@@ -58,6 +69,18 @@ class Experience:
         self.resultingState = resultingState
         self.action = actions
         self.reward = rewards
+
+    def OriginalState(self):
+        return self.originalState
+
+    def ResultingState(self):
+        return self.resultingState
+
+    def Action(self, playerIndex):
+        return self.action[playerIndex]
+
+    def Reward(self, playerIndex):
+        return self.reward[playerIndex]
 
 
 class ExperienceBuffer:
@@ -79,40 +102,44 @@ class Network(nn.Module):
     def __init__(self):
         super().__init__()
         self.own_tiles_convolution = nn.Sequential(
-            nn.Conv2d(4, 8, 5, padding='same'),
+            nn.Conv2d(5, 64, 7, padding='same'),
             nn.ReLU(),
-            nn.Conv2d(8, 8, 5, padding='same'),
+            nn.Conv2d(64, 64, 7, padding='same'),
             nn.ReLU(),
-            nn.Conv2d(8, 8, 5, padding='same'),
+            nn.Conv2d(64, 64, 7, padding='same'),
             nn.ReLU(),
         )
 
         self.enemy_tiles_convolution = nn.Sequential(
-            nn.Conv2d(1, 8, 5),
+            nn.Conv2d(5, 64, 7, padding='same'),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, 7, padding='same'),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, 7, padding='same'),
             nn.ReLU(),
         )
 
         self.linear_layers = nn.Sequential(
-            nn.Linear(2 * 8 * BOARD_WIDTH * BOARD_HEIGHT, 64),
+            nn.Linear(2 * 64 * BOARD_WIDTH * BOARD_HEIGHT, 256),
             nn.ReLU(),
-            nn.Linear(64, 16),
+            nn.Linear(256, 256),
             nn.ReLU(),
-            nn.Linear(16, ACTION_COUNT),
+            nn.Linear(256, ACTION_COUNT),
             nn.ReLU(),
             nn.Softmax(dim=0),
         )
 
     def forward(self, x):
         # Split input into our board and the enemy board
-        our_board, their_board = x.split([4 * BOARD_WIDTH * BOARD_HEIGHT, 4 * BOARD_WIDTH * BOARD_HEIGHT])
+        our_board, their_board = x.split([5 * BOARD_WIDTH * BOARD_HEIGHT, 5 * BOARD_WIDTH * BOARD_HEIGHT])
 
-        our_board = our_board.reshape((BOARD_WIDTH, BOARD_HEIGHT, 4))
+        our_board = our_board.reshape((BOARD_WIDTH, BOARD_HEIGHT, 5))
         our_board = our_board.permute((2, 0, 1))
         our_board = self.own_tiles_convolution(our_board.cuda())
 
-        their_board = their_board.reshape((BOARD_WIDTH, BOARD_HEIGHT, 4))
+        their_board = their_board.reshape((BOARD_WIDTH, BOARD_HEIGHT, 5))
         their_board = their_board.permute((2, 0, 1))
-        their_board = self.own_tiles_convolution(their_board.cuda())
+        their_board = self.enemy_tiles_convolution(their_board.cuda())
 
         combined = torch.cat([our_board.flatten(), their_board.flatten()])
 
@@ -122,8 +149,18 @@ class Network(nn.Module):
 
 
 # Initialise model and experience buffer
-MODEL = None
+POLICY_NETWORK = None
+TARGET_NETWORK = None
+OPTIMIZER      = None
 EXPERIENCE_BUFFER = ExperienceBuffer()
+
+
+def InitialiseModels():
+    global POLICY_NETWORK, TARGET_NETWORK, OPTIMIZER
+    POLICY_NETWORK = Network().to("cuda")
+    TARGET_NETWORK = Network().to("cuda")
+    TARGET_NETWORK.load_state_dict(POLICY_NETWORK.state_dict())
+    OPTIMIZER = torch.optim.AdamW(POLICY_NETWORK.parameters(), lr=LEARNING_RATE, amsgrad=True)
 
 
 # Connect to Puyo-Puyo server
@@ -137,22 +174,59 @@ def RandomActions():
 
 
 def SelectActions(state):
-    perception = [
-        torch.cat([torch.flatten(state.GetPerception(0)), torch.flatten(state.GetPerception(1))]),
-        torch.cat([torch.flatten(state.GetPerception(1)), torch.flatten(state.GetPerception(0))])
-    ]
+    if random.random() < EPSILON:
+        return [random.randint(0, ACTION_COUNT - 1), random.randint(0, ACTION_COUNT - 1)]
+    else:
+        perception = [
+            torch.cat([torch.flatten(state.GetPerception(0)), torch.flatten(state.GetPerception(1))]),
+            torch.cat([torch.flatten(state.GetPerception(1)), torch.flatten(state.GetPerception(0))])
+        ]
 
-    outputs = [MODEL(p) for p in perception]
+        outputs = [POLICY_NETWORK(p) for p in perception]
 
-    choices = [int(o.max(0).indices.view(1, 1)) for o in outputs]
+        choices = [int(o.max(0).indices.view(1, 1)) for o in outputs]
 
-    return choices
+        return choices
+
+
+def OptimizeModel():
+    # Skip if we don't have enough experiences to make a batch
+    if EXPERIENCE_BUFFER.Size() < BATCH_SIZE:
+        return
+
+
+    batch = EXPERIENCE_BUFFER.Sample(BATCH_SIZE)
+
+
+    for player in range(2):
+        states  = [torch.cat([s.OriginalState().GetPerception((player + 0) % 2).flatten(), s.OriginalState().GetPerception((player + 0) % 2).flatten()]) for s in batch]
+        actions = torch.tensor([[s.Action(player)] for s in batch]).to('cuda')
+        rewards = torch.tensor([[s.Reward(player)] for s in batch]).to('cuda')
+
+
+        predicted_action_values = torch.stack([POLICY_NETWORK(s) for s in states]).gather(1, actions)
+
+
+        next_state_values = torch.Tensor([[TARGET_NETWORK(s).max(0).values] for s in states]).to('cuda')
+        target_action_values = rewards + DISCOUNT_FACTOR * next_state_values
+
+        lossFunction  = nn.HuberLoss()
+        loss = lossFunction(predicted_action_values, target_action_values)
+
+        OPTIMIZER.zero_grad()
+        loss.backward()
+        OPTIMIZER.step()
+
+    pass
 
 
 for i in range(EPISODE_COUNT):
     state = None
     previousState = None
     selected_actions = None
+
+    EPSILON = max(EXPLORATION_PROBABILITY - EXPLORATION_PROBABILITY * math.log(float(i) + 1.0, EPISODE_COUNT), 0)
+
     while True:
         previousState = state
         state = State(SERVER.recv(4096))
@@ -161,11 +235,16 @@ for i in range(EPISODE_COUNT):
             experience = Experience(previousState, state, selected_actions, [state.Reward(0), state.Reward(1)])
             EXPERIENCE_BUFFER.Push(experience)
 
-        if MODEL is None:
-            MODEL = Network().to("cuda")
+        OptimizeModel()
+
+        if (i > 0 and i % 10 == 0):
+            TARGET_NETWORK.load_state_dict(POLICY_NETWORK.state_dict())
+
+        if POLICY_NETWORK is None:
+            InitialiseModels()
 
         if state.GameOver():
-            continue
+            break
 
         selected_actions = SelectActions(state)
         SERVER.send(bytearray(selected_actions))
