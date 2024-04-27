@@ -40,20 +40,25 @@ namespace Strawberry::RLPuyo
 
 	void Environment::Step() noexcept
 	{
-		mSkillPoints[0] += mBoards[0].Step().Map([](auto& x) { return Board::ChainValue(x); }).UnwrapOr(0);
-		mSkillPoints[1] += mBoards[1].Step().Map([](auto& x) { return Board::ChainValue(x); }).UnwrapOr(0);
+		unsigned int pointsEarned[] = {
+			mBoards[0].Step().Map([](auto& x) { return Board::ChainValue(x); }).UnwrapOr(0),
+			mBoards[1].Step().Map([](auto& x) { return Board::ChainValue(x); }).UnwrapOr(0)
+		};
+
+		mSkillPoints[0] += pointsEarned[0];
+		mSkillPoints[1] += pointsEarned[1];
 
 		if (GameOver())
 		{
 			if (mBoards[0].HasLost())
 			{
-				mPreviousRewards[0] = -1;
-				mPreviousRewards[1] = 0;
+				mPreviousRewards[0] = -1000;
+				mPreviousRewards[1] = 1000;
 			}
 			else if (mBoards[1].HasLost())
 			{
-				mPreviousRewards[0] = 0;
-				mPreviousRewards[1] = -1;
+				mPreviousRewards[0] = 1000;
+				mPreviousRewards[1] = -1000;
 			}
 			else
 			{
@@ -62,8 +67,8 @@ namespace Strawberry::RLPuyo
 		}
 		else
 		{
-			mPreviousRewards[0] = -1 + static_cast<int>(mSkillPoints[0]);
-			mPreviousRewards[1] = -1 + static_cast<int>(mSkillPoints[1]);
+			mPreviousRewards[0] = pointsEarned[0] == 0 ? -1 : static_cast<int>(pointsEarned[0]);
+			mPreviousRewards[1] = pointsEarned[1] == 0 ? -1 : static_cast<int>(pointsEarned[1]);
 		}
 	}
 
@@ -78,7 +83,7 @@ namespace Strawberry::RLPuyo
 
 	std::tuple<int, int> Environment::GetRewards() const noexcept
 	{
-		return {mPreviousRewards[0] + (mBoards[1].HasLost() ? 1000 : 0) - (mBoards[0].HasLost() ? 1000 : 0), mPreviousRewards[1] + (mBoards[0].HasLost() ? 1000 : 0) - (mBoards[1].HasLost() ? 1000 : 0)};
+		return {mPreviousRewards[0], mPreviousRewards[1]};
 	}
 
 
