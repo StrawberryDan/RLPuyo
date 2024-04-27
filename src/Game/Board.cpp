@@ -209,6 +209,8 @@ namespace Strawberry::RLPuyo
 	{
 		Core::Assert(mCurrentTiles.HasValue());
 
+		// Descend the current placing tile
+		mCurrentTiles->Descend();
 
 		auto hasHitBottom = [this]{ return mCurrentTiles->Position()[1] == BOARD_HEIGHT - 2; };
 		auto hasHitAnotherTile = [this]{ return mTiles[mCurrentTiles->Position()[0]][mCurrentTiles->Position()[1] + 2] != Tile::EMPTY; };
@@ -234,11 +236,6 @@ namespace Strawberry::RLPuyo
 
 			// Return the chain
 			return chain;
-		}
-		else
-		{
-			// Descend the current placing tile
-			mCurrentTiles->Descend();
 		}
 
 		return Core::NullOpt;
