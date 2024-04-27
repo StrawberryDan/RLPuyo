@@ -1,8 +1,9 @@
+import datetime
 import math
 import random
 import socket
 from collections import deque
-
+import csv
 import torch
 import json
 
@@ -149,6 +150,10 @@ class Network(nn.Module):
 
 
 # Initialise model and experience buffer
+MODEL_ID = datetime.datetime.now().strftime("%d-%m-%Y-%H-%M")
+CSV_FILE = open(f'./{MODEL_ID}.csv', "w", newline='')
+CSV_WRITER = csv.writer(CSV_FILE)
+CSV_WRITER.writerow(['EPISODE', "TURN COUNT", "REWARDS 0", "REWARDS 1", "REWARD RATE 0", "REWARD RATE 1", "EPSILON"])
 POLICY_NETWORK = None
 TARGET_NETWORK = None
 OPTIMIZER      = None
@@ -225,10 +230,16 @@ for i in range(EPISODE_COUNT):
     selected_actions = None
 
     EPSILON = max(EXPLORATION_PROBABILITY - EXPLORATION_PROBABILITY * math.log(float(i) + 1.0, EPISODE_COUNT), 0)
+    rewards = [0, 0]
+    turn_count = 0
+
 
     while True:
         previousState = state
         state = State(SERVER.recv(4096))
+        rewards[0] += state.Reward(0)
+        rewards[1] += state.Reward(1)
+        turn_count += 1
 
         if state is not None and previousState is not None and selected_actions is not None:
             experience = Experience(previousState, state, selected_actions, [state.Reward(0), state.Reward(1)])
@@ -236,14 +247,17 @@ for i in range(EPISODE_COUNT):
 
         OptimizeModel()
 
-        if (i > 0 and i % 10 == 0):
-            TARGET_NETWORK.load_state_dict(POLICY_NETWORK.state_dict())
-
         if POLICY_NETWORK is None:
             InitialiseModels()
 
         if state.GameOver():
+            CSV_WRITER.writerow([i, turn_count] + rewards + [rewards[0] / turn_count, rewards[1] / turn_count, EPSILON])
+            CSV_FILE.flush()
+            TARGET_NETWORK.load_state_dict(POLICY_NETWORK.state_dict())
             break
 
         selected_actions = SelectActions(state)
         SERVER.send(bytearray(selected_actions))
+
+
+torch.save(POLICY_NETWORK.state_dict(), f"{MODEL_ID}.pt")
