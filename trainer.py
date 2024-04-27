@@ -199,7 +199,8 @@ def OptimizeModel():
 
 
     for player in range(2):
-        states  = [torch.cat([s.OriginalState().GetPerception((player + 0) % 2).flatten(), s.OriginalState().GetPerception((player + 0) % 2).flatten()]) for s in batch]
+        states  = [torch.cat([s.OriginalState().GetPerception((player + 0) % 2).flatten(), s.OriginalState().GetPerception((player + 1) % 2).flatten()]) for s in batch]
+        next_states = [torch.cat([s.ResultingState().GetPerception((player + 0) % 2).flatten(), s.ResultingState().GetPerception((player + 1) % 2).flatten()]) for s in batch]
         actions = torch.tensor([[s.Action(player)] for s in batch]).to('cuda')
         rewards = torch.tensor([[s.Reward(player)] for s in batch]).to('cuda')
 
@@ -207,17 +208,15 @@ def OptimizeModel():
         predicted_action_values = torch.stack([POLICY_NETWORK(s) for s in states]).gather(1, actions)
 
 
-        next_state_values = torch.Tensor([[TARGET_NETWORK(s).max(0).values] for s in states]).to('cuda')
+        next_state_values = torch.Tensor([[TARGET_NETWORK(s).max(0).values] for s in next_states]).to('cuda')
         target_action_values = rewards + DISCOUNT_FACTOR * next_state_values
 
         lossFunction  = nn.HuberLoss()
         loss = lossFunction(predicted_action_values, target_action_values)
 
-        OPTIMIZER.zero_grad()
         loss.backward()
         OPTIMIZER.step()
-
-    pass
+        OPTIMIZER.zero_grad()
 
 
 for i in range(EPISODE_COUNT):
