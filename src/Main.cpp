@@ -18,12 +18,9 @@ constexpr double UPDATE_INTERVAL = RLPUYO_REALTIME ? 0.2 : 0.001;
 constexpr float  RENDER_INTERVAL = 0.0;
 
 
-std::vector<Action> ActionsFromMessage(const Core::IO::DynamicByteBuffer& bytes)
+Action ActionsFromMessage(const Core::IO::DynamicByteBuffer& bytes)
 {
-	return {
-		static_cast<Action>(bytes[0]),
-		static_cast<Action>(bytes[1]),
-	};
+	return static_cast<Action>(bytes[0]);
 }
 
 
@@ -57,7 +54,7 @@ void HandleConnection(Net::Socket::TCPSocket client)
 				continue;
 			}
 
-			auto actionMessage = client.ReadAll(2);
+			auto actionMessage = client.ReadAll(1);
 			if (actionMessage.IsErr())
 				switch (actionMessage.Err())
 				{
@@ -67,9 +64,8 @@ void HandleConnection(Net::Socket::TCPSocket client)
 						Core::Unreachable();
 				}
 
-			std::vector<Action> chosenActions = ActionsFromMessage(actionMessage.Unwrap());
-			environment->ProcessAction(0, chosenActions[0]);
-			environment->ProcessAction(1, chosenActions[1]);
+			Action chosenAction = ActionsFromMessage(actionMessage.Unwrap());
+			environment->ProcessAction(chosenAction);
 			environment->Step();
 			mUpdateTimer.Restart();
 		}

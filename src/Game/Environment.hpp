@@ -21,7 +21,7 @@ namespace Strawberry::RLPuyo
 		Environment(const Window::Window& window);
 
 
-		void ProcessAction(unsigned int playerIndex, Action action) noexcept;
+		void ProcessAction(Action action) noexcept;
 
 
 		void Step() noexcept;
@@ -30,18 +30,17 @@ namespace Strawberry::RLPuyo
 		void Render() noexcept;
 
 
-		std::tuple<int, int> GetRewards() const noexcept;
+		int GetReward() const noexcept;
 		bool GameOver() const noexcept;
 
 
 		nlohmann::json StateAsJson() const noexcept;
-		nlohmann::json PlayerStateAsJson(unsigned int playerIndex) const noexcept;
+		nlohmann::json PlayerStateAsJson() const noexcept;
 
 
 	private:
-		int          mPreviousRewards[2];
-		unsigned int mSkillPoints[2];
-		Board        mBoards[2];
+		int          mPreviousReward;
+		Board        mBoards;
 
 
 		Core::Optional<Renderer> mRenderer;

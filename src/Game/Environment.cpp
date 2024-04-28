@@ -4,92 +4,60 @@
 #include "Environment.hpp"
 #include "Strawberry/Window/Window.hpp"
 
+
 //======================================================================================================================
 //  Method Definitions
 //----------------------------------------------------------------------------------------------------------------------
 namespace Strawberry::RLPuyo
 {
 	Environment::Environment()
-		: mSkillPoints{0, 0}
+		: mPreviousReward(0)
 	{}
 
 
 	Environment::Environment(const Window::Window& window)
 		: mRenderer(window)
-		, mSkillPoints{0, 0}
+		, mPreviousReward(0)
 	{}
 
 
-	void Environment::ProcessAction(unsigned int playerIndex, Action action) noexcept
+	void Environment::ProcessAction(Action action) noexcept
 	{
-		switch (action)
-		{
-			case Action::OffensiveSkill:
-				if (mSkillPoints[playerIndex] >= 100)
-					mBoards[(playerIndex + 1) % 2].ProcessOffensiveSkill(std::exchange(mSkillPoints[playerIndex], 0));
-				break;
-			case Action::DefensiveSkill:
-				if (mSkillPoints[playerIndex] >= 100)
-					mBoards[playerIndex].ProcessDefenseSkill(std::exchange(mSkillPoints[playerIndex], 0));
-				break;
-			default:
-				mBoards[playerIndex].ProcessAction(action);
-		}
+		mBoards.ProcessAction(action);
 	}
 
 
 	void Environment::Step() noexcept
 	{
-		unsigned int pointsEarned[] = {
-			mBoards[0].Step().Map([](auto& x) { return Board::ChainValue(x); }).UnwrapOr(0),
-			mBoards[1].Step().Map([](auto& x) { return Board::ChainValue(x); }).UnwrapOr(0)
-		};
-
-		mSkillPoints[0] += pointsEarned[0];
-		mSkillPoints[1] += pointsEarned[1];
+		Core::Optional<unsigned int> pointsEarned = mBoards.Step().Map([](auto& x) { return Board::ChainValue(x); });
 
 		if (GameOver())
 		{
-			if (mBoards[0].HasLost())
-			{
-				mPreviousRewards[0] = -1000;
-				mPreviousRewards[1] = 1000;
-			}
-			else if (mBoards[1].HasLost())
-			{
-				mPreviousRewards[0] = 1000;
-				mPreviousRewards[1] = -1000;
-			}
-			else
-			{
-				Core::Unreachable();
-			}
+			mPreviousReward = 0;
 		}
 		else
 		{
-			mPreviousRewards[0] = pointsEarned[0] == 0 ? -1 : static_cast<int>(pointsEarned[0]);
-			mPreviousRewards[1] = pointsEarned[1] == 0 ? -1 : static_cast<int>(pointsEarned[1]);
+			mPreviousReward = pointsEarned.ValueOr(0);
 		}
 	}
 
 
 	void Environment::Render() noexcept
 	{
-		mRenderer->Submit(0, mBoards[0]);
-		mRenderer->Submit(1, mBoards[1]);
+		mRenderer->Submit(0, mBoards);
 		mRenderer->Render();
 	}
 
 
-	std::tuple<int, int> Environment::GetRewards() const noexcept
+	int Environment::GetReward() const noexcept
 	{
-		return {mPreviousRewards[0], mPreviousRewards[1]};
+		return mPreviousReward;
 	}
 
 
 	bool Environment::GameOver() const noexcept
 	{
-		return mBoards[0].HasLost() || mBoards[1].HasLost();
+		return mBoards.HasLost();
 	}
 
 
@@ -98,23 +66,19 @@ namespace Strawberry::RLPuyo
 		auto state = nlohmann::json::object();
 
 		state["gameOver"] = GameOver();
-		auto players = nlohmann::json::array();
-		players[0] = PlayerStateAsJson(0);
-		players[1] = PlayerStateAsJson(1);
-		state["players"] = players;
+		state["players"] = PlayerStateAsJson();
 
 		return state;
 	}
 
 
-	nlohmann::json Environment::PlayerStateAsJson(unsigned int playerIndex) const noexcept
+	nlohmann::json Environment::PlayerStateAsJson() const noexcept
 	{
 		auto playerState = nlohmann::json::object();
 
-		playerState["ap"]     = mSkillPoints[playerIndex];
-		playerState["queue"]  = mBoards[playerIndex].QueueAsJson();
-		playerState["tiles"]  = mBoards[playerIndex].TilesAsJson();
-		playerState["reward"] = mPreviousRewards[playerIndex];
+		playerState["queue"]  = mBoards.QueueAsJson();
+		playerState["tiles"]  = mBoards.TilesAsJson();
+		playerState["reward"] = GetReward();
 
 		return playerState;
 	}
