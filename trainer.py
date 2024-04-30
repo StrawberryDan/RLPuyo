@@ -184,24 +184,25 @@ def OptimizeModel():
 
 
     batch = EXPERIENCE_BUFFER.Sample(BATCH_SIZE)
-    states  = [s.OriginalState().GetPerception() for s in batch]
-    next_states = [s.ResultingState().GetPerception() for s in batch]
     actions = torch.tensor([[s.Action()] for s in batch]).to('cuda')
     rewards = torch.tensor([[s.Reward()] for s in batch]).to('cuda')
 
 
-    predicted_action_values = torch.stack([POLICY_NETWORK(s) for s in states]).gather(1, actions)
+    predicted_action_values = torch.stack([POLICY_NETWORK(s.OriginalState().GetPerception()) for s in batch]).gather(1, actions)
 
 
-    next_state_values = torch.Tensor([[TARGET_NETWORK(s).max(0).values] for s in next_states]).to('cuda')
+    torch.set_grad_enabled(False)
+    next_state_values = torch.Tensor([[TARGET_NETWORK(s.ResultingState().GetPerception()).max(0).values] if not s.ResultingState().GameOver() else [0] for s in batch]).to('cuda')
+    torch.set_grad_enabled(True)
     target_action_values = rewards + DISCOUNT_FACTOR * next_state_values
 
     lossFunction  = nn.HuberLoss()
     loss = lossFunction(predicted_action_values, target_action_values)
 
-    loss.backward()
-    OPTIMIZER.step()
     OPTIMIZER.zero_grad()
+    loss.backward()
+    torch.nn.utils.clip_grad_value_(POLICY_NETWORK.parameters(), 100)
+    OPTIMIZER.step()
 
 
 for i in range(EPISODE_COUNT):
