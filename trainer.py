@@ -139,18 +139,15 @@ MODEL_ID = datetime.datetime.now().strftime("%d-%m-%Y-%H-%M")
 CSV_FILE = open(f'./{MODEL_ID}.csv', "w", newline='')
 CSV_WRITER = csv.writer(CSV_FILE)
 CSV_WRITER.writerow(['EPISODE', "TURN COUNT", "REWARD", "REWARD RATE", "EPSILON"])
-POLICY_NETWORK = None
-TARGET_NETWORK = None
-OPTIMIZER      = None
+POLICY_NETWORKS = None
+OPTIMIZERS      = None
 EXPERIENCE_BUFFER = ExperienceBuffer()
 
 
 def InitialiseModels():
-    global POLICY_NETWORK, TARGET_NETWORK, OPTIMIZER
-    POLICY_NETWORK = Network().to("cuda")
-    TARGET_NETWORK = Network().to("cuda")
-    TARGET_NETWORK.load_state_dict(POLICY_NETWORK.state_dict())
-    OPTIMIZER = torch.optim.AdamW(POLICY_NETWORK.parameters(), lr=LEARNING_RATE, amsgrad=True)
+    global POLICY_NETWORKS, OPTIMIZERS
+    POLICY_NETWORKS = [Network().to("cuda"), Network().to("cuda")]
+    OPTIMIZERS = [torch.optim.AdamW(POLICY_NETWORKS[0].parameters()), torch.optim.AdamW(POLICY_NETWORKS[1].parameters())]
 
 
 # Connect to Puyo-Puyo server
@@ -168,7 +165,7 @@ def SelectActions(state):
         return random.randint(0, ACTION_COUNT - 1)
         perception = state.GetPerception()
 
-        output = POLICY_NETWORK(perception)
+        output = POLICY_NETWORKS[0](perception)
 
         choice = int(output.max(0).indices.view(1, 1))
 
@@ -182,27 +179,27 @@ def OptimizeModel():
     if EXPERIENCE_BUFFER.Size() < 5 * BATCH_SIZE:
         return
 
+    selected_network = random.randint(0, 1)
+    other_network = (selected_network + 1) % 2
 
     batch = EXPERIENCE_BUFFER.Sample(BATCH_SIZE)
     actions = torch.tensor([[s.Action()] for s in batch]).to('cuda')
     rewards = torch.tensor([[s.Reward()] for s in batch]).to('cuda')
 
-
-    predicted_action_values = torch.stack([POLICY_NETWORK(s.OriginalState().GetPerception()) for s in batch]).gather(1, actions)
-
+    predicted_action_values = torch.stack([POLICY_NETWORKS[selected_network](s.OriginalState().GetPerception()) for s in batch]).gather(1, actions)
 
     torch.set_grad_enabled(False)
-    next_state_values = torch.Tensor([[TARGET_NETWORK(s.ResultingState().GetPerception()).max(0).values] if not s.ResultingState().GameOver() else [0] for s in batch]).to('cuda')
+    next_state_values = torch.Tensor([[POLICY_NETWORKS[other_network](s.ResultingState().GetPerception()).max(0).values] if not s.ResultingState().GameOver() else [0] for s in batch]).to('cuda')
     torch.set_grad_enabled(True)
     target_action_values = rewards + DISCOUNT_FACTOR * next_state_values
 
-    lossFunction  = nn.HuberLoss()
+    lossFunction = nn.HuberLoss()
     loss = lossFunction(predicted_action_values, target_action_values)
 
-    OPTIMIZER.zero_grad()
+    OPTIMIZERS[selected_network].zero_grad()
     loss.backward()
-    torch.nn.utils.clip_grad_value_(POLICY_NETWORK.parameters(), 100)
-    OPTIMIZER.step()
+    torch.nn.utils.clip_grad_value_(POLICY_NETWORKS[selected_network].parameters(), 100)
+    OPTIMIZERS[selected_network].step()
 
 
 for i in range(EPISODE_COUNT):
@@ -227,17 +224,16 @@ for i in range(EPISODE_COUNT):
 
         OptimizeModel()
 
-        if POLICY_NETWORK is None:
+        if POLICY_NETWORKS is None:
             InitialiseModels()
 
         if state.GameOver():
             CSV_WRITER.writerow([i, turn_count] + [reward] + [reward / turn_count, EPSILON])
             CSV_FILE.flush()
-            TARGET_NETWORK.load_state_dict(POLICY_NETWORK.state_dict())
             break
 
         selected_action = SelectActions(state)
         SERVER.send(bytearray([selected_action]))
 
 
-torch.save(POLICY_NETWORK.state_dict(), f"{MODEL_ID}.pt")
+torch.save(POLICY_NETWORKS[0].state_dict(), f"{MODEL_ID}.pt")
