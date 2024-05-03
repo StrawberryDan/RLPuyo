@@ -11,15 +11,14 @@ from torch import nn
 
 assert torch.cuda.is_available()
 
-EPISODE_COUNT = 500
+EPISODE_COUNT = 1000
 BATCH_SIZE = 32
 BOARD_WIDTH = None
 BOARD_HEIGHT = None
 ACTION_COUNT = 6 - 2
 EXPERIENCE_BUFFER_SIZE = 5000
-LEARNING_RATE = 1e-4
-DISCOUNT_FACTOR = 0.9
-EXPLORATION_PROBABILITY = 0.5
+DISCOUNT_FACTOR = 0.75
+EXPLORATION_PROBABILITY = 0.75
 EPSILON = EXPLORATION_PROBABILITY
 
 
@@ -105,13 +104,11 @@ class Network(nn.Module):
         self.own_tiles_convolution = nn.Sequential(
             nn.Conv2d(5, 128, 7, padding='same'),
             nn.ReLU(),
-            nn.Conv2d(128, 64, 7, padding='same'),
-            nn.ReLU(),
-            nn.Conv2d(64, 32, 7, padding='same'),
+            nn.Conv2d(128, 128, 7, padding='same'),
             nn.ReLU(),
         )
         self.linear_layers = nn.Sequential(
-            nn.Linear(32 * BOARD_WIDTH * BOARD_HEIGHT, 512),
+            nn.Linear(128 * BOARD_WIDTH * BOARD_HEIGHT, 512),
             nn.ReLU(),
             nn.Linear(512, 256),
             nn.ReLU(),
